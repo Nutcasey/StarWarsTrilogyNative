@@ -71,7 +71,8 @@ goto fail
 echo C++ tools: OK
 echo.
 
-rem 4. Build
+rem 4. Build (SWT_NO_PAUSE: build.bat must not pause, this window does)
+set SWT_NO_PAUSE=1
 if exist data\crom.bin (call build.bat) else (call build.bat "%ZIP%")
 if errorlevel 1 goto fail
 echo.

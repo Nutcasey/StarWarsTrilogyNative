@@ -15,7 +15,9 @@ if "%ZIP%"=="" set ZIP=%SWT_ROM_ZIP%
 if "%ZIP%"=="" set ZIP=%~dp0swtrilgy.zip
 
 python -c "" >nul 2>&1 || goto no_python
-if exist data\crom.bin goto rom_ok
+rem drive_program.bin too: data\ from an older build.bat can lack it (a set without
+rem epr-21119), and the game then stops at FAILED FEEDBACK LEVER INITIALIZE
+if exist data\crom.bin if exist data\drive_program.bin goto rom_ok
 if not exist "%ZIP%" goto no_rom
 python tools\romtool.py "%ZIP%" data || goto fail
 :rom_ok

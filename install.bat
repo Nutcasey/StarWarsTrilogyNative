@@ -17,7 +17,7 @@ rem 1. The ROM, asked for first so nothing is installed for nothing
 set "ZIP=%~1"
 if "%ZIP%"=="" set "ZIP=%SWT_ROM_ZIP%"
 if "%ZIP%"=="" set "ZIP=%~dp0swtrilgy.zip"
-if exist data\crom.bin goto rom_ok
+if exist data\crom.bin if exist data\drive_program.bin goto rom_ok
 :wait_rom
 if exist "%ZIP%" goto rom_ok
 echo The arcade ROM is not here ^("%ZIP%"^).
@@ -73,7 +73,7 @@ echo.
 
 rem 4. Build (SWT_NO_PAUSE: build.bat must not pause, this window does)
 set SWT_NO_PAUSE=1
-if exist data\crom.bin (call build.bat) else (call build.bat "%ZIP%")
+if exist data\drive_program.bin (call build.bat) else (call build.bat "%ZIP%")
 if errorlevel 1 goto fail
 echo.
 echo Installed. Play with StarWarsTrilogy.exe; update later with update.bat.

@@ -121,6 +121,7 @@ add_executable(StarWarsTrilogy
     src/video/vk_presenter.cpp
     src/video/ui_overlay.cpp
     src/ui/frontend.cpp
+    src/ui/news.cpp
     src/ui/menu_music.cpp
     src/ui/splash_video.cpp
     src/video/r3d_state.cpp
@@ -159,7 +160,7 @@ target_include_directories(StarWarsTrilogy PRIVATE
 )
 # volk loads vulkan-1.dll at runtime: the SDK is not needed
 target_compile_definitions(StarWarsTrilogy PRIVATE VK_NO_PROTOTYPES VK_USE_PLATFORM_WIN32_KHR)
-target_link_libraries(StarWarsTrilogy PRIVATE SDL3::SDL3-static winmm ole32 oleaut32 windowscodecs mfplat mfuuid gdi32 dwmapi shell32
+target_link_libraries(StarWarsTrilogy PRIVATE SDL3::SDL3-static winmm ole32 oleaut32 windowscodecs mfplat mfuuid gdi32 dwmapi shell32 winhttp
     ${CMAKE_SOURCE_DIR}/third_party/ngx/lib/nvsdk_ngx_d.lib)
 
 if(MSVC)
@@ -186,8 +187,9 @@ if(LW_TESTS)
     add_executable(rom_zip_test tests/rom_zip_test.cpp src/runtime/rom_zip.cpp ${MINIZ_DIR}/miniz.c)
     add_executable(jtag_test tests/jtag_test.cpp src/runtime/jtag.cpp)
     add_executable(r3d_state_test tests/r3d_state_test.cpp)
-    foreach(t tilegen_test fnv_test options_test audio_stream_test rom_zip_test jtag_test r3d_state_test)
-        target_include_directories(${t} PRIVATE src/video src/common src/runtime src/audio ${MINIZ_DIR})
+    add_executable(news_test tests/news_test.cpp src/ui/news.cpp)
+    foreach(t tilegen_test fnv_test options_test audio_stream_test rom_zip_test jtag_test r3d_state_test news_test)
+        target_include_directories(${t} PRIVATE src/video src/common src/runtime src/audio src/ui ${MINIZ_DIR})
         if(MSVC)
             target_compile_options(${t} PRIVATE /W4 /utf-8)
             target_compile_definitions(${t} PRIVATE _CRT_SECURE_NO_WARNINGS)
@@ -200,6 +202,7 @@ if(LW_TESTS)
     add_test(NAME rom_zip COMMAND rom_zip_test)
     add_test(NAME jtag COMMAND jtag_test)
     add_test(NAME r3d_state COMMAND r3d_state_test)
+    add_test(NAME news COMMAND news_test)
     find_package(Python3 COMPONENTS Interpreter)
     if(Python3_Interpreter_FOUND)
         add_test(NAME fnv_python COMMAND Python3::Interpreter ${CMAKE_SOURCE_DIR}/tests/fnv_test.py

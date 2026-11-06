@@ -97,6 +97,10 @@ textures of your own are kept; a repository file you edited yourself is copied t
 `out\update_backup\` before it is replaced. `update.bat -Check` only says whether there is
 something new. In a folder cloned with git it runs `git pull` instead.
 
+The game also checks at launch: when there is news of a new version (`news.txt` on GitHub), the main
+menu shows what is new with an **UPDATE NOW** button, which closes the game, runs `update.bat` and
+starts the game again once it is rebuilt. Turn it off in OPTIONS > DISPLAY > CHECK FOR UPDATES.
+
 ## Controls
 
 | | Mouse and keyboard | Gamepad |

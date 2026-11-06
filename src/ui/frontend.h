@@ -11,12 +11,16 @@
 #define NOMINMAX
 #include <windows.h>
 
+#include <atomic>
 #include <cstdint>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <vector>
 
 #include "../runtime/stats.h"
+#include "news.h"
 #include "splash_video.h"
 
 struct FrontendSettings {
@@ -57,6 +61,8 @@ struct FrontendSettings {
     int sight_size = 80;    // the game's sight drawn at this size, % (Star Wars Trilogy)
     bool pointer_sight = true; // the sight goes where the mouse / light gun points (false: the mouse is the lever)
     std::string lost_world_path;   // MORE RECOMPS: where The Lost World is (its folder or LostWorld.exe; "" = look for it)
+    bool check_updates = true;     // at launch, news.txt on GitHub: a window with what is new and UPDATE NOW
+    int news_seen = 0;             // the newest news.txt entry the player closed with LATER
 
     // save/settings.ini; missing keys keep their current value
     void load(const char* path);
@@ -102,6 +108,11 @@ public:
     std::wstring gamepads;  // the pads connected, for the CONTROLS tab ("" = none)
     bool gyro_pad = false;  // one of them has a gyroscope
 
+    // At launch: news.txt from GitHub in the background (when the settings
+    // allow it). Entries newer than the news.txt here and than the ones
+    // closed with LATER open a window over the main menu (see news.h)
+    void check_for_news();
+
     // DEBUG (Star Wars Trilogy): straight to a phase of a stage. StartDebug
     // reads debug_choice = stage * 4 + phase (runtime.cpp, debug jumps)
     int debug_choice = -1;
@@ -119,7 +130,7 @@ private:
         PLAY, OPTIONS, QUIT, ARCADE, BACK, RESUME, SETTINGS, QUIT_TO_MENU, TABS,
         RECORDS, DEBUG, DEBUG_STAGE, DEBUG_PHASE, MORE_GAMES, LOST_WORLD,
         OPT_QUALITY, OPT_DISPLAY, OPT_VOLUME, OPT_MUSIC, OPT_SPEAKERS, OPT_REAR, OPT_SAMPLES, OPT_AA, OPT_HAZE, OPT_BLOOM, OPT_AO, OPT_SKY, OPT_SUN, OPT_SHADOWS, OPT_SHAFTS, OPT_SOFT, OPT_HDR, OPT_RELIEF, OPT_SHARPEN, OPT_TEXT, OPT_CROSS, OPT_MICE,
-        OPT_SAT, OPT_GAMMA, OPT_MOTION, OPT_PAD_SPEED, OPT_GYRO, OPT_GYRO_SPEED, OPT_VIBRATION, OPT_ASSIST, OPT_RT, OPT_MENU_MUSIC, EXTRA, DOGFIGHT, OPT_POINTER, OPT_SIGHT, OPT_PAD_AIM, OPT_PAD_INVERT,
+        OPT_SAT, OPT_GAMMA, OPT_MOTION, OPT_PAD_SPEED, OPT_GYRO, OPT_GYRO_SPEED, OPT_VIBRATION, OPT_ASSIST, OPT_RT, OPT_MENU_MUSIC, EXTRA, DOGFIGHT, OPT_POINTER, OPT_SIGHT, OPT_PAD_AIM, OPT_PAD_INVERT, OPT_UPDATES,
     };
     struct Item {
         Id id;
@@ -190,6 +201,28 @@ private:
     void play_lost_world();
     RECT lw_logo_rect() const;        // where its logo goes on the backdrop
     void shade_backdrop();            // darker at the right and the bottom, the logo: on px_
+    // UPDATE AVAILABLE: the window over the main menu with the new entries of
+    // news.txt. UPDATE NOW starts update.bat (it waits for the game to close,
+    // updates, rebuilds and starts it again) and closes the game; LATER (Esc)
+    // keeps it closed until a newer entry
+    struct NewsDownload {                  // shared with the thread that downloads it (left to finish on its own)
+        std::mutex mutex;
+        std::string text;                  // news.txt from GitHub
+        std::atomic<int> state{0};         // 0 downloading, 1 there, 2 failed, 3 taken (take_news)
+    };
+    std::shared_ptr<NewsDownload> news_download_;
+    std::vector<NewsEntry> news_;          // the entries shown
+    int news_latest_ = 0;                  // the newest one on GitHub
+    bool news_open_ = false;
+    int news_button_ = 0;                  // 0 UPDATE NOW, 1 LATER
+    int news_hot_ = -1;                    // the button under the pointer
+    RECT news_buttons_[2]{};
+    void take_news();                      // the download, once it is there
+    void draw_news();
+    bool news_key(int vk);
+    void news_choose(int button);
+    void start_update();
+
     RECT coffee_rect_{};   // the donation link (main menu)
     bool coffee_hot_ = false, coffee_focus_ = false;
     void open_coffee();

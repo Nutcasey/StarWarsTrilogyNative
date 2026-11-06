@@ -474,16 +474,17 @@ int main(int argc, char** argv) {
     }
     if (g_opt.menu) {
         FrontendSettings& s = frontend.settings;
-        s.fullscreen = ini.fullscreen;
-        s.splash = ini.splash;
-        s.menu_music = ini.menu_music;
-        settings_from_options(s, g_opt);
+        s = ini;   // all of save/settings.ini (the controls, the paths, the update check)...
+        settings_from_options(s, g_opt);   // ...with the command-line options over it
         frontend.aa_at_launch = s.aa;
         frontend.rt_available = renderer.ray_tracing_available();
         if (s.fullscreen && !presenter.fullscreen()) presenter.toggle_fullscreen();
         // the logo first (not when a debugging aid drives the menu)
         if (getenv("LW_MENU_KEYS") || getenv("LW_MENU_SHOT")) frontend.open(Frontend::Screen::Main);
-        else frontend.open_splash();
+        else {
+            frontend.open_splash();
+            frontend.check_for_news();   // news.txt on GitHub while the logo plays
+        }
         g_menu_open = true;
         presenter.input_hook = [&](UINT msg, WPARAM wp, LPARAM lp) -> bool {
             int x = GET_X_LPARAM(lp), y = GET_Y_LPARAM(lp);

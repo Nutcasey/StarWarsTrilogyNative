@@ -1195,8 +1195,8 @@ static bool arcade_entry_frame() {
 
 // The attract never shows with the menu on: a game that ends (no credit at
 // the CONTINUE? count, the game over, the ending and its name entry) goes
-// back to the attract (in_attract). On that frame, before its picture is
-// taken, the run on to the mission select starts behind the main menu,
+// back to the attract (its sequence out of the game steps). On that frame,
+// before its picture is taken, the run on to the mission select starts behind the main menu,
 // unseen and muted, as QUIT TO MAIN MENU does (arcade_entry_frame from entry
 // 3), so the attract's title, rankings and demo never get on screen
 static void attract_guard_frame() {
@@ -1206,7 +1206,14 @@ static void attract_guard_frame() {
     if (seq != seq_was) printf("[play] sequence %u -> %u (mode %u, frame %llu)\n", unsigned(seq_was), unsigned(seq),
                                unsigned(rd8(0x1BC85B)), (unsigned long long)g_frame);
     seq_was = seq;
-    bool attract = in_attract();
+    // The game is over only once its sequence leaves the game steps (2, 3):
+    // the last game over state steps it on to 4, which wraps to 0. The mode
+    // byte is left out here: a game goes on over several missions (one
+    // cleared, back to the mission select for the next, the duels after the
+    // second and third, then the last stage), and a mode byte at 0 in
+    // between was taken for a game over, so a cleared mission ended the game
+    // at the main menu (issue #6)
+    bool attract = seq != 2 && seq != 3;
     bool ended = !was && attract;
     was = attract;
     if (!ended || !g_skip_attract || g_arcade_entry || g_boot_skip) return;

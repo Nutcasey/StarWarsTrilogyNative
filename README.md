@@ -16,7 +16,7 @@
   - Space redrawn: a deep star field and the Milky Way that turn with the game, and a cinematic grade.
   - The Death Star as in the films: a dark night side, a bright edge on its lit limb and thousands
     of lights in its trenches, which fade into the dark ahead.
-  - Lightsabres, laser bolts and explosions light what is around them; lasers and engines glow.
+  - Lightsabers, laser bolts and explosions light what is around them; lasers and engines glow.
   - Vader's suit and helmet shine and reflect the room; Boba Fett's desert has wind ripples and
     fine sand.
 - **Sharp image**: MSAA or NVIDIA DLAA, HD text.

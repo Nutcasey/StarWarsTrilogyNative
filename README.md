@@ -26,6 +26,15 @@
 - **Quality presets** (Options > Display > Quality) to set the costly effects at once, from laptops to RTX cards.
 - **Achievements and stats** in Records.
 
+## Coming soon
+
+New game modes made for this port, already waiting under **Play > Extra modes**:
+
+- **Dogfight**: your X-wing against squadrons of TIE fighters, with random encounters and
+  objectives, so no two flights are the same.
+
+More content will follow in future updates.
+
 ## ⚠️ ROM not included
 
 You need your own copy of the arcade ROM. Nothing from it is in this repository.

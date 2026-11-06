@@ -211,6 +211,20 @@ bool load_game_rom(std::vector<uint8_t>& sound_program, std::vector<uint8_t>& so
                 load_rom("sound_samples.bin", sound_samples, false);
                 load_rom("dsb_program.bin", dsb_program, false);
                 load_rom("dsb_mpeg.bin", dsb_mpeg, false);
+                if (g_drive_rom.empty()) {
+                    // An older romtool.py extracted the rest of a set without
+                    // epr-21119: say so here, not with the game's own
+                    // FAILED FEEDBACK LEVER INITIALIZE
+                    std::string msg =
+                        "The ROM in " + full_path(d) + " has no drive_program.bin (epr-21119.ic8, the force\n"
+                        "feedback board of the joystick). Without it the game stops at FAILED FEEDBACK LEVER\n"
+                        "INITIALIZE.\n\n"
+                        "Your swtrilgy.zip is probably an older set that lacks that chip. Get a current,\n"
+                        "complete swtrilgy.zip (Rev. A), put it next to build.bat and run build.bat again.";
+                    fprintf(stderr, "%s\n", msg.c_str());
+                    if (!g_opt.headless) MessageBoxA(nullptr, msg.c_str(), "Star Wars Trilogy Native", MB_OK | MB_ICONERROR);
+                    return false;
+                }
                 printf("ROM: %s\n", d.c_str());
                 return true;
             }

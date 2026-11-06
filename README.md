@@ -53,6 +53,10 @@ You need your own copy of the arcade ROM. Nothing from it is in this repository.
 Look for **`swtrilgy.zip`**, the *Rev. A* set (Sega Model 3 Step 2.1). Inside you should find
 files like `epr-21379a.17` and `mpr-21339.01`. Other versions of the game will not work.
 
+It must also contain `epr-21119.ic8`, the program of the joystick's force feedback board. Some older
+sets lack it; with one of those the game stops at *FAILED FEEDBACK LEVER INITIALIZE*. `build.bat`
+checks every chip of the zip and says which ones are missing.
+
 ## Install
 
 You need Windows 10/11 (64-bit) and a GPU with a Vulkan 1.3 driver (most cards and integrated

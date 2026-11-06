@@ -27,6 +27,8 @@ struct GamepadSettings {
     int gyro_speed = 5;    // 1..10
     int rumble = 2;        // vibration: 0 off, 1 low, 2 medium, 3 high
     int assist = 1;        // aim assist: 0 off, 1 low, 2 medium, 3 high
+    bool lever = false;    // the sticks are the flight lever itself (back to the centre when let go), as on the cabinet
+    int invert = 0;        // the sticks' axes turned round: bit 0 x, bit 1 y
 };
 
 // Something to shoot at, as a box in fractions of the original 4:3 screen

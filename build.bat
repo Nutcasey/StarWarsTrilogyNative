@@ -38,6 +38,17 @@ call "%VSDIR%\VC\Auxiliary\Build\vcvars64.bat" >nul || goto fail
 set "CMAKE=%VSDIR%\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
 set "CTEST=%VSDIR%\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\ctest.exe"
 if not exist "%CMAKE%" goto no_vs
+rem glslang needs CMake 3.27, and the CMake of Visual Studio 2022 before 17.8 is
+rem older: then use a newer cmake.exe from PATH if there is one
+set "OLD_CMAKE=%CMAKE%"
+set "CMAKE="
+call :try_cmake "%OLD_CMAKE%"
+if defined CMAKE goto cmake_ok
+for /f "delims=" %%i in ('where cmake 2^>nul') do if not defined CMAKE call :try_cmake "%%i"
+if not defined CMAKE goto old_cmake
+for %%i in ("%CMAKE%") do set "CTEST=%%~dpictest.exe"
+echo The CMake of Visual Studio is too old, using "%CMAKE%"
+:cmake_ok
 "%CMAKE%" -S . -B build\cmake -G Ninja -DCMAKE_BUILD_TYPE=Release || goto fail
 "%CMAKE%" --build build\cmake || goto fail
 "%CTEST%" --test-dir build\cmake --output-on-failure || goto fail
@@ -62,6 +73,20 @@ goto fail
 
 :no_python
 echo Python 3 not found. Run install.bat instead: it installs Python and the C++ tools, then builds.
+goto fail
+
+:try_cmake
+rem Sets CMAKE to the cmake.exe in %1 if it is at least the version
+rem tools\cmake_version.cmake asks for
+"%~1" -P tools\cmake_version.cmake >nul 2>&1
+if not errorlevel 1 set "CMAKE=%~1"
+exit /b 0
+
+:old_cmake
+"%OLD_CMAKE%" -P tools\cmake_version.cmake
+echo The CMake of Visual Studio ^("%VSDIR%"^) is too old: this needs CMake 3.27 or newer.
+echo Update Visual Studio ^(Visual Studio Installer, Update button^) or run install.bat, which updates it.
+echo A cmake.exe in PATH is ignored unless it is 3.27 or newer.
 goto fail
 
 :no_vs

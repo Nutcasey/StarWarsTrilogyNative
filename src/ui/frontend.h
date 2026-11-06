@@ -109,8 +109,9 @@ public:
     bool gyro_pad = false;  // one of them has a gyroscope
 
     // At launch: news.txt from GitHub in the background (when the settings
-    // allow it). Entries newer than the news.txt here and than the ones
-    // closed with LATER open a window over the main menu (see news.h)
+    // allow it). An entry newer than the news.txt here and than the last one
+    // closed with LATER opens a window over the main menu listing every entry
+    // this version lacks (see news.h)
     void check_for_news();
 
     // DEBUG (Star Wars Trilogy): straight to a phase of a stage. StartDebug
@@ -201,8 +202,8 @@ private:
     void play_lost_world();
     RECT lw_logo_rect() const;        // where its logo goes on the backdrop
     void shade_backdrop();            // darker at the right and the bottom, the logo: on px_
-    // UPDATE AVAILABLE: the window over the main menu with the new entries of
-    // news.txt. UPDATE NOW starts update.bat (it waits for the game to close,
+    // UPDATE AVAILABLE: the window over the main menu with the entries of
+    // news.txt this version lacks. UPDATE NOW starts update.bat (it waits for the game to close,
     // updates, rebuilds and starts it again) and closes the game; LATER (Esc)
     // keeps it closed until a newer entry
     struct NewsDownload {                  // shared with the thread that downloads it (left to finish on its own)

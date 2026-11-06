@@ -887,7 +887,9 @@ void Frontend::take_news() {
     std::vector<char> here = read_file("news.txt");   // what this version already has
     int local = news_latest(parse_news(std::string(here.begin(), here.end())));
     news_latest_ = news_latest(remote);
-    news_ = news_after(remote, std::max(local, settings.news_seen));
+    // A new entry since the last LATER brings the window up; it then lists
+    // everything this version is missing, the entries put off before too
+    if (news_latest_ > std::max(local, settings.news_seen)) news_ = news_after(remote, local);
     printf("[menu] news: newest %d on GitHub, %d here, %d seen: %zu new\n", news_latest_, local, settings.news_seen,
            news_.size());
 }
@@ -937,7 +939,7 @@ void Frontend::start_update() {
     ShellExecuteW(nullptr, L"open", GAME_URL, nullptr, nullptr, SW_SHOWNORMAL);
 }
 
-// A card over the darkened main menu: UPDATE AVAILABLE, the new entries of
+// A card over the darkened main menu: UPDATE AVAILABLE, the entries of
 // news.txt (as many lines as fit nicely), the two buttons and what UPDATE NOW does
 void Frontend::draw_news() {
     auto U = [&](float v) { return int(v * u_ + 0.5f); };

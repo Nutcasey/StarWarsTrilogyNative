@@ -421,14 +421,18 @@ std::vector<Frontend::Item> Frontend::items() const {
         return list;
     }
     case Screen::Play:
-        return {{ARCADE, L"ARCADE CLASSIC", L"", L"The original arcade game.  Insert a coin with 5 and press 1, or BACK and START on a gamepad"},
+        return {{ARCADE, L"ARCADE CLASSIC", L"",
+                 pad_prompts ? L"The original arcade game.  Insert a coin with VIEW and press MENU to start"
+                             : L"The original arcade game.  Insert a coin with 5 and press 1, or BACK and START on a gamepad"},
                 {EXTRA, L"EXTRA MODES", L"", L"New game modes made for this port"},
                 {BACK, L"BACK", L"", L"Return to the main menu"}};
     case Screen::More:
         return {{LOST_WORLD, L"THE LOST WORLD", lw_exe_.empty() ? L"FREE DOWNLOAD" : L"INSTALLED",
                  std::wstring(LW_ABOUT) + (lw_exe_.empty()
-                     ? L"Not found on this PC: ENTER opens its page, where you can download it"
-                     : L"Found on this PC: ENTER closes this game and starts it")},
+                     ? (pad_prompts ? L"Not found on this PC: A opens its page, where you can download it"
+                                    : L"Not found on this PC: ENTER opens its page, where you can download it")
+                     : (pad_prompts ? L"Found on this PC: A closes this game and starts it"
+                                    : L"Found on this PC: ENTER closes this game and starts it"))},
                 {BACK, L"BACK", L"", L"Return to the main menu"}};
     case Screen::Extra:
         return {{DOGFIGHT, L"DOGFIGHT", L"COMING SOON", L"An X-wing against TIE fighters: random encounters and objectives", false},
@@ -471,7 +475,7 @@ std::vector<Frontend::Item> Frontend::items() const {
             L"Also the ambient occlusion: corners and the ground under things, even off screen"};
         std::wstring pads = gamepads.empty() ? L"No gamepad connected" : L"Connected: " + gamepads;
         std::vector<Item> all = {{OPT_DISPLAY, L"DISPLAY", settings.fullscreen ? L"FULLSCREEN" : L"WINDOW",
-                 L"Window or full screen (also F11 or Alt+Enter)"},
+                 pad_prompts ? L"Window or full screen" : L"Window or full screen (also F11 or Alt+Enter)"},
                 {OPT_MOTION, L"MOTION", settings.smooth ? L"SMOOTH" : L"ORIGINAL",
                  L"Smooth: the 3D is also drawn between the game's 57.5 frames, at your monitor's refresh rate"},
                 {OPT_VOLUME, L"EFFECTS", std::to_wstring(settings.volume), L"Volume of the sound effects and voices"},
@@ -541,7 +545,8 @@ std::vector<Frontend::Item> Frontend::items() const {
                  L"The gamepad rumbles when you fire and when you are hit"},
                 {OPT_ASSIST, L"AIM ASSIST", BLOOM_LEVELS[settings.aim_assist],
                  L"With a gamepad the sight slows down over the enemy ships and follows them a little"}};
-        std::vector<Item> list = {{TABS, L"", L"", L"Left / Right here, Q / E or L1 / R1 change the tab"}};
+        std::vector<Item> list = {{TABS, L"", L"", pad_prompts ? L"Left / Right here, or LB / RB, change the tab"
+                                                               : L"Left / Right here, Q / E or L1 / R1 change the tab"}};
         for (const OptionTab& o : OPTION_TABS)   // the tab's options in their order, then any not listed
             for (const Item& it : all)
                 if (it.id == o.id && o.tab == tab_) list.push_back(it);
@@ -553,7 +558,8 @@ std::vector<Frontend::Item> Frontend::items() const {
         int got = 0;
         for (int64_t t : records.unlocked) got += t != 0;
         std::wstring summary = std::to_wstring(got) + L" of " + std::to_wstring(achievement_table().size()) +
-                               L" achievements unlocked.  Up / Down scrolls, Q / E changes the tab";
+                               (pad_prompts ? L" achievements unlocked.  Up / Down scrolls, LB / RB changes the tab"
+                                            : L" achievements unlocked.  Up / Down scrolls, Q / E changes the tab");
         return {{TABS, L"", L"", summary}, {BACK, L"BACK", L"", L"Return to the main menu"}};
     }
     default:
@@ -1688,6 +1694,55 @@ void Frontend::sprite(const Picture& p, int x0, int y0, int w, int h) {
         }
 }
 
+const Frontend::Picture& Frontend::pad_icon(const std::wstring& button) {
+    auto it = pad_icons_.find(button);
+    if (it != pad_icons_.end()) return it->second;
+    std::wstring name = button;
+    for (wchar_t& c : name) c = towlower(c);
+    Picture& p = pad_icons_[button];
+    load_image(L"res/pad/" + name + L".png", p.px, p.w, p.h);
+    return p;
+}
+
+namespace {
+constexpr uint32_t PAD_A = 0x6FD17A, PAD_B = 0xE8655A, PAD_Y = 0xE8C85A, PAD_X = 0x5AA8E8, KEYCAP = 0xB8C6D8;
+}  // namespace
+
+void Frontend::prompt(int& x, int y, int h, const wchar_t* pad_button, const wchar_t* key, const wchar_t* what) {
+    auto U = [&](float v) { return int(v * u_ + 0.5f); };
+    if (pad_prompts && pad_button && pad_icon(pad_button).w > 0) {   // the button's picture
+        const Picture& icon = pad_icon(pad_button);
+        int iw = h * icon.w / icon.h;
+        sprite(icon, x, y, iw, h);
+        x += iw + U(10);
+    } else if (pad_prompts && pad_button) {   // no picture: a coloured disc or a grey pill with its name
+        std::wstring b = pad_button;
+        uint32_t c = b == L"A" ? PAD_A : b == L"B" ? PAD_B : b == L"Y" ? PAD_Y : b == L"X" ? PAD_X : KEYCAP;
+        int bw = std::max(h, measure(MONO, U(17), b) + U(20));
+        pill(x, y, x + bw, y + h, c, 1);
+        text(MONO, U(17), b, x + bw / 2, y + h / 2 - U(9), 1, {0x111111, 0x111111});
+        x += bw + U(10);
+    } else if (key) {   // the key in a keycap
+        int kw = std::max(h, measure(MONO, U(17), key) + U(22));
+        fill(x, y, x + kw, y + h, 0x000000, 0.45f);
+        frame(x, y, x + kw, y + h, std::max(1, U(1.5f)), KEYCAP, 0.75f);
+        text(MONO, U(17), key, x + kw / 2, y + h / 2 - U(9), 1, {0xE0E8F2, 0xE0E8F2});
+        x += kw + U(10);
+    }
+    if (what && *what) x += text(ITEM, U(21), what, x, y + h / 2 - U(13), 0, {0xC8D2E0, 0xC8D2E0}) + U(40);
+}
+
+int Frontend::prompt_width(int h, const wchar_t* pad_button, const wchar_t* key, const wchar_t* what) {
+    auto U = [&](float v) { return int(v * u_ + 0.5f); };
+    int wd = 0;
+    const Picture* icon = pad_prompts && pad_button ? &pad_icon(pad_button) : nullptr;
+    if (icon && icon->w > 0) wd = h * icon->w / icon->h + U(10);
+    else if (icon) wd = std::max(h, measure(MONO, U(17), pad_button) + U(20)) + U(10);
+    else if (key) wd = std::max(h, measure(MONO, U(17), key) + U(22)) + U(10);
+    if (what && *what) wd += measure(ITEM, U(21), what) + U(40);
+    return wd;
+}
+
 // Lines of at most max_w pixels, broken between words
 std::vector<std::wstring> Frontend::wrap(Family f, int px, const std::wstring& s, int max_w) {
     std::vector<std::wstring> lines;
@@ -1908,24 +1963,17 @@ void Frontend::draw_side_menu(const std::vector<Item>& list) {
         sprite(credit_, (w - lw) / 2, ly, lw, lh);
         text(ITEM, U(17), L"PC REMASTER BY", w / 2, ly - U(26), 1, {FOOT, FOOT});
     }
-    // The keys at the right, each in a keycap, from the right edge
-    std::vector<std::pair<const wchar_t*, const wchar_t*>> keys = {{L"ENTER", L"SELECT"}};
+    // The keys at the right, each in a keycap (or the gamepad's button), ending at the right edge
+    struct Key { const wchar_t *pad, *key, *what; };
+    std::vector<Key> keys = {{L"A", L"ENTER", L"SELECT"}};
     if (screen_ == Screen::More && selected_ < n && list[selected_].id == LOST_WORLD) {
-        if (lw_exe_.empty()) keys = {{L"ENTER", L"OPEN PAGE"}};
-        else keys = {{L"ENTER", L"PLAY"}, {L"G", L"GITHUB PAGE"}};
+        if (lw_exe_.empty()) keys = {{L"A", L"ENTER", L"OPEN PAGE"}};
+        else keys = {{L"A", L"ENTER", L"PLAY"}, {L"Y", L"G", L"GITHUB PAGE"}};
     }
-    if (screen_ != Screen::Main) keys.push_back({L"ESC", L"BACK"});
-    int x = w - U(70), kh = U(36), ky = fy + U(12) - kh / 2;
-    for (int i = int(keys.size()) - 1; i >= 0; i--) {
-        x -= measure(ITEM, U(21), keys[i].second);
-        text(ITEM, U(21), keys[i].second, x, ky + kh / 2 - U(13), 0, {0xC8D2E0, 0xC8D2E0});
-        int kw = std::max(kh, measure(MONO, U(17), keys[i].first) + U(22));
-        x -= U(10) + kw;
-        fill(x, ky, x + kw, ky + kh, 0x000000, 0.45f);
-        frame(x, ky, x + kw, ky + kh, std::max(1, U(1.5f)), 0xB8C6D8, 0.75f);
-        text(MONO, U(17), keys[i].first, x + kw / 2, ky + kh / 2 - U(9), 1, {0xE0E8F2, 0xE0E8F2});
-        x -= U(40);
-    }
+    if (screen_ != Screen::Main) keys.push_back({L"B", L"ESC", L"BACK"});
+    int kh = U(36), ky = fy + U(12) - kh / 2, x = w - U(70) + U(40);
+    for (const Key& k : keys) x -= prompt_width(kh, k.pad, k.key, k.what);
+    for (const Key& k : keys) prompt(x, ky, kh, k.pad, k.key, k.what);
 }
 
 // ---- Splash screens ----
@@ -2310,10 +2358,21 @@ bool Frontend::draw(int w, int h, std::vector<uint32_t>& out) {
             ly += U(34);
         }
     }
-    const wchar_t* foot = records   ? L"ARROWS  SCROLL / TAB      WHEEL  SCROLL      ESC  BACK"
-                          : options ? L"ARROWS  SELECT / CHANGE      Q / E  TAB      ESC  BACK"
-                                  : L"ARROWS  SELECT      ENTER / CLICK  CONFIRM      ESC  BACK";
-    text(MONO, U(21), foot, cx, foot_y, 1, {FOOT, FOOT});
+    if (pad_prompts) {   // the gamepad's buttons, centred
+        struct Key { const wchar_t *pad, *what; };
+        std::vector<Key> keys;
+        if (records) keys = {{L"LS", L"SCROLL"}, {L"LB", L""}, {L"RB", L"TAB"}, {L"B", L"BACK"}};
+        else if (options) keys = {{L"LS", L"SELECT / CHANGE"}, {L"LB", L""}, {L"RB", L"TAB"}, {L"B", L"BACK"}};
+        else keys = {{L"LS", L"SELECT"}, {L"A", L"CONFIRM"}, {L"B", L"BACK"}};
+        int kh = U(34), ky = foot_y + U(12) - kh / 2, x = cx + U(40) / 2;
+        for (const Key& k : keys) x -= prompt_width(kh, k.pad, nullptr, k.what) / 2;
+        for (const Key& k : keys) prompt(x, ky, kh, k.pad, nullptr, k.what);
+    } else {
+        const wchar_t* foot = records   ? L"ARROWS  SCROLL / TAB      WHEEL  SCROLL      ESC  BACK"
+                              : options ? L"ARROWS  SELECT / CHANGE      Q / E  TAB      ESC  BACK"
+                                      : L"ARROWS  SELECT      ENTER / CLICK  CONFIRM      ESC  BACK";
+        text(MONO, U(21), foot, cx, foot_y, 1, {FOOT, FOOT});
+    }
     if (news_open_ && screen_ == Screen::Main) draw_news();
     dirty_ = false;
     fade_in();

@@ -37,7 +37,7 @@ struct AimTarget {
 };
 
 // What the pads send to the menus (any pad)
-enum class PadKey { Up, Down, Left, Right, Accept, Back, TabPrev, TabNext, Start };
+enum class PadKey { Up, Down, Left, Right, Accept, Back, TabPrev, TabNext, Page, Start };   // Page: Y (G, a game's GitHub page)
 
 struct PadState {
     bool connected = false, has_gyro = false;

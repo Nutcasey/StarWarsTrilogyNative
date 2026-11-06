@@ -136,7 +136,8 @@ Entirely optional: it supports the work on this project, not the game, which bel
 ## License
 
 The code in this repository is under the [MIT License](LICENSE). The libraries and fonts in
-`third_party/` keep their own licenses. The game itself (ROM, code, data, music and voices) is
+`third_party/` keep their own licenses. The gamepad button pictures in `res/pad/` are
+[Controller Input Icons](https://opengameart.org/content/controller-input-icons) by ElDuderino (CC0). The game itself (ROM, code, data, music and voices) is
 not included and stays the property of its owners: you need your own copy of `swtrilgy.zip`.
 
 <sub>A fan project for personal use, not affiliated with or endorsed by Sega or Lucasfilm.

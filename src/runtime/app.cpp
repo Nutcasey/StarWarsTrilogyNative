@@ -497,7 +497,9 @@ int main(int argc, char** argv) {
                 return false;
             }
             switch (msg) {
-            case WM_KEYDOWN: return frontend.key(int(wp));
+            case WM_KEYDOWN:
+                pad_in_menu = false;   // the keyboard again: its keys in the key help
+                return frontend.key(int(wp));
             case WM_MOUSEMOVE: {
                 // Windows also sends it when nothing moved (a window or the
                 // pointer changing): those neither bring the pointer back nor
@@ -966,6 +968,11 @@ int main(int argc, char** argv) {
                 music_time = t;
             }
             presenter.set_cursor_visible(frontend.active() && !pad_in_menu && !frontend.splash());
+            static const bool menu_pad = getenv("SWT_MENU_PAD") != nullptr;   // debugging aid: the gamepad's key help
+            if (frontend.pad_prompts != (pad_in_menu || menu_pad)) {   // the key help shows the gamepad's buttons or the keys
+                frontend.pad_prompts = pad_in_menu || menu_pad;
+                frontend.invalidate();
+            }
             if (frontend.active()) {
                 RECT rc;
                 GetClientRect(presenter.hwnd(), &rc);
@@ -995,7 +1002,7 @@ int main(int argc, char** argv) {
             frontend.invalidate();
         }
         for (PadKey k : g_pads.take_keys()) {   // the menus, as keys (START resumes from the pause menu)
-            static const int VK[] = {VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_RETURN, VK_ESCAPE, 'Q', 'E'};
+            static const int VK[] = {VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, VK_RETURN, VK_ESCAPE, 'Q', 'E', 'G'};
             bool resume = frontend.screen() == Frontend::Screen::Pause;
             if (frontend.active()) {
                 frontend.key(k == PadKey::Start ? (resume ? VK_ESCAPE : VK_RETURN) : VK[int(k)]);

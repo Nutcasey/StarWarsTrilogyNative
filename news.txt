@@ -13,6 +13,11 @@
 #   # ...          a comment, never shown
 # Newest entry at the top. Keep each one short: about ten lines fit.
 
+[2] 2026-11-06
+- The menus show the gamepad's buttons when you use a controller, and the keys again when you use the keyboard
+- Xbox button icons by ElDuderino (CC0)
+- Y on the gamepad opens The Lost World's GitHub page in MORE RECOMPS
+
 [1] 2026-11-06
 - The main menu tells you when there is a new version, with what is new in it
 - UPDATE NOW closes the game, updates it, builds it again and starts it

@@ -12,6 +12,13 @@
 - **True widescreen** 16:9, not stretched, at any resolution (21:9 too, with `--aspect 21:9`).
 - **Ray-traced sun shadows** and ambient occlusion, plus distance haze, bloom, light shafts and
   HDR lighting.
+- **New looks, made for this port**:
+  - Space redrawn: a deep star field and the Milky Way that turn with the game, and a cinematic grade.
+  - The Death Star as in the films: a dark night side, a bright edge on its lit limb and thousands
+    of lights in its trenches, which fade into the dark ahead.
+  - Lightsabres, laser bolts and explosions light what is around them; lasers and engines glow.
+  - Vader's suit and helmet shine and reflect the room; Boba Fett's desert has wind ripples and
+    fine sand.
 - **Sharp image**: MSAA or NVIDIA DLAA, HD text.
 - **Smooth motion** at 120 / 144 Hz and above: the 3D is drawn between the game's own frames.
 - **Arcade sound**, the music and voices of the Digital Sound Board included, with surround and headphone modes.

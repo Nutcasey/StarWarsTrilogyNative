@@ -29,7 +29,7 @@
 <table>
   <tr>
     <td><img src="docs/img/menu.jpg" alt="Main menu"></td>
-    <td><img src="docs/img/death_star.jpg" alt="The Death Star with a TIE fighter in the sights"></td>
+    <td><img src="docs/img/death_star.jpg" alt="TIE fighters locked on in front of the Death Star"></td>
   </tr>
   <tr>
     <td><img src="docs/img/hoth.jpg" alt="Walkers on Hoth in true widescreen"></td>

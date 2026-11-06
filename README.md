@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/img/yavin.jpg" alt="X-wings over Yavin in the opening, engines lit" width="100%">
+  <img src="docs/img/yavin.jpg" alt="An X-wing and the Rebel fleet over Yavin in the opening" width="100%">
 </p>
 
 ## What you get

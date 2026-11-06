@@ -107,6 +107,7 @@ public:
     bool rt_available = false;   // the GPU can trace rays (RAY TRACING option)
     std::wstring gamepads;  // the pads connected, for the CONTROLS tab ("" = none)
     bool gyro_pad = false;  // one of them has a gyroscope
+    bool pad_prompts = false;   // a gamepad drives the menu: its buttons in the key help and hints, not the keyboard's
 
     // At launch: news.txt from GitHub in the background (when the settings
     // allow it). An entry newer than the news.txt here and than the last one
@@ -188,6 +189,15 @@ private:
     bool has_backdrop() const { return backdrop_.w > 0; }
     void picture(const Picture& p, int x0, int y0, int x1, int y1, float anchor_x = 0.5f);   // covering the box, opaque
     void sprite(const Picture& p, int x0, int y0, int w, int h);      // with its transparency
+    // The gamepad's buttons in the key help (res/pad/<button>.png, CC0); w = 0:
+    // none, a drawn disc or pill instead
+    std::map<std::wstring, Picture> pad_icons_;
+    const Picture& pad_icon(const std::wstring& button);
+    // One entry of the key help at (x, y), h high: the gamepad's button when
+    // pad_prompts (else the key, in a keycap), then what it does. x moves past
+    // it. prompt_width: how far it moves x
+    void prompt(int& x, int y, int h, const wchar_t* pad_button, const wchar_t* key, const wchar_t* what);
+    int prompt_width(int h, const wchar_t* pad_button, const wchar_t* key, const wchar_t* what);
     void backdrop_background();
     // Main, Play, Boss, Survival and Debug on the backdrop: a column at the right under the logo
     void draw_side_menu(const std::vector<Item>& list);

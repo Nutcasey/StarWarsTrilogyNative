@@ -157,6 +157,15 @@ void r3d_share_world(R3DScene& out) {
             !close(v.proj[5], wv.proj[5]) || !close(v.proj[8], wv.proj[8]) || !close(v.proj[9], wv.proj[9]))
             continue;
         v.shares_world = true;
+        // No light at all (sun and ambient both 0): the actors at the end of
+        // Hoth's base (C-3PO, R2-D2, the trooper by the Falcon) came out
+        // black, where the arcade has them lit as the world (issue #15).
+        // They are drawn with the world's camera, so its light fits them
+        if (v.sun_intensity <= 0 && v.ambient <= 0) {
+            memcpy(v.sun, wv.sun, sizeof(v.sun));
+            v.sun_intensity = wv.sun_intensity;
+            v.ambient = wv.ambient;
+        }
         for (uint32_t k = v.opaque_first; k < v.opaque_first + v.opaque_count; k++) out.vertices[k].flags |= R3D_WORLD;
         for (uint32_t k = v.trans_first; k < v.trans_first + v.trans_count; k++) out.vertices[k].flags |= R3D_WORLD;
     }

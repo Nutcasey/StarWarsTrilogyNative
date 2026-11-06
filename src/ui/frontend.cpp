@@ -158,6 +158,8 @@ void FrontendSettings::load(const char* path) {
         else if (k == "splash_screens") splash = on;
         else if (k == "menu_music") menu_music = on;
         else if (k == "pointer_aim") pointer_sight = v != "lever";
+        else if (k == "pad_aim") pad_lever = v == "lever";
+        else if (k == "pad_invert") pad_invert = v == "x" ? 1 : v == "y" ? 2 : v == "both" ? 3 : 0;
         else if (k == "sight_size") sight_size = std::clamp(atoi(value) / 10 * 10, 50, 100);
     }
     fclose(f);
@@ -170,14 +172,15 @@ void FrontendSettings::save(const char* path) const {
     static const char* const BLOOM[4] = {"off", "low", "medium", "high"};   // also the vibration and aim assist levels
     static const char* const SPEAKERS[3] = {"stereo", "surround", "headphones"};
     static const char* const RT_MODES[3] = {"off", "shadows", "ao"};
+    static const char* const INVERT[4] = {"off", "x", "y", "both"};
     fprintf(f, "fullscreen = %d\nvolume = %d\nmusic = %d\naa = %s\nhaze = %d\nbloom = %s\nao = %d\nsky = %s\nsun = %d\nshadows = %d\nlight_shafts = %d\nsoft_particles = %d\nhdr = %d\nsurface_detail = %d\nsharpen = %d\nhd_text = %d\ncrosshair = %d\n"
                "second_mouse = %d\nsaturation = %d\ngamma = %.2f\nmotion = %s\nspeakers = %s\nrear_boost = %d\nsample_interpolation = %s\n"
                "pad_speed = %d\ngyro = %d\ngyro_speed = %d\nvibration = %s\naim_assist = %s\nray_tracing = %s\n"
-               "splash_screens = %d\nmenu_music = %d\npointer_aim = %s\nsight_size = %d\n",
+               "splash_screens = %d\nmenu_music = %d\npointer_aim = %s\nsight_size = %d\npad_aim = %s\npad_invert = %s\n",
             fullscreen, volume, music, AA[aa], haze, BLOOM[bloom], ao, sky ? "procedural" : "original", sun, shadows, shafts, soft, hdr, relief, sharpen, hd_text, crosshair, second_mouse, saturation,
             gamma / 100.0, smooth ? "smooth" : "original", SPEAKERS[speakers], rear_boost, cubic_samples ? "cubic" : "linear",
             pad_speed, gyro, gyro_speed, BLOOM[vibration], BLOOM[aim_assist], RT_MODES[ray_tracing],
-            splash, menu_music, pointer_sight ? "sight" : "lever", sight_size);
+            splash, menu_music, pointer_sight ? "sight" : "lever", sight_size, pad_lever ? "lever" : "sight", INVERT[pad_invert]);
     if (!lost_world_path.empty()) fprintf(f, "lost_world_path = %s\n", lost_world_path.c_str());
     fclose(f);
 }
@@ -296,7 +299,7 @@ const Frontend::OptionTab Frontend::OPTION_TABS[] = {
     {OPT_SUN, LIGHTING_TAB}, {OPT_SHADOWS, LIGHTING_TAB}, {OPT_RT, LIGHTING_TAB}, {OPT_HDR, LIGHTING_TAB},
     {OPT_AO, LIGHTING_TAB}, {OPT_BLOOM, LIGHTING_TAB}, {OPT_HAZE, LIGHTING_TAB},
     {OPT_VOLUME, AUDIO_TAB}, {OPT_MUSIC, AUDIO_TAB}, {OPT_SPEAKERS, AUDIO_TAB}, {OPT_REAR, AUDIO_TAB}, {OPT_SAMPLES, AUDIO_TAB}, {OPT_MENU_MUSIC, AUDIO_TAB},
-    {OPT_SIGHT, CONTROLS_TAB}, {OPT_POINTER, CONTROLS_TAB}, {OPT_PAD_SPEED, CONTROLS_TAB}, {OPT_GYRO, CONTROLS_TAB}, {OPT_GYRO_SPEED, CONTROLS_TAB},
+    {OPT_SIGHT, CONTROLS_TAB}, {OPT_POINTER, CONTROLS_TAB}, {OPT_PAD_AIM, CONTROLS_TAB}, {OPT_PAD_SPEED, CONTROLS_TAB}, {OPT_PAD_INVERT, CONTROLS_TAB}, {OPT_GYRO, CONTROLS_TAB}, {OPT_GYRO_SPEED, CONTROLS_TAB},
     {OPT_VIBRATION, CONTROLS_TAB}, {OPT_ASSIST, CONTROLS_TAB},
 };
 
@@ -340,6 +343,7 @@ std::vector<Frontend::Item> Frontend::items() const {
     auto on_off = [](bool v) { return std::wstring(v ? L"ON" : L"OFF"); };
     static const wchar_t* const AA[3] = {L"MSAA 4X", L"DLAA", L"OFF"};
     static const wchar_t* const BLOOM_LEVELS[4] = {L"OFF", L"LOW", L"MEDIUM", L"HIGH"};
+    static const wchar_t* const INVERT_TEXT[4] = {L"OFF", L"HORIZONTAL", L"VERTICAL", L"BOTH"};
     static const wchar_t* const SPEAKERS[3] = {L"STEREO", L"SURROUND 4.0", L"HEADPHONES"};
     static const wchar_t* const SPEAKER_HINTS[3] = {
         L"Front and rear sound mixed on two speakers",
@@ -461,8 +465,14 @@ std::vector<Frontend::Item> Frontend::items() const {
                 {OPT_POINTER, L"MOUSE / LIGHT GUN", settings.pointer_sight ? L"POINT" : L"LEVER",
                  settings.pointer_sight ? L"The sight goes right where the mouse or a light gun (Sinden) points"
                                         : L"The mouse moves the flight lever, as on the cabinet"},
+                {OPT_PAD_AIM, L"STICK AIM", settings.pad_lever ? L"LEVER" : L"SIGHT",
+                 settings.pad_lever ? L"The stick is the flight lever, as on the cabinet: the sight goes back to the centre when you let go.  " + pads
+                                    : L"The sticks move the sight, which stays where you leave it.  " + pads},
                 {OPT_PAD_SPEED, L"STICK SPEED", std::to_wstring(settings.pad_speed),
-                 L"How fast the gamepad's sticks move the sight.  " + pads},
+                 settings.pad_lever ? L"How fast the lever swings over when you move the stick"
+                                    : L"How fast the gamepad's sticks move the sight"},
+                {OPT_PAD_INVERT, L"INVERT STICK", INVERT_TEXT[settings.pad_invert],
+                 L"Turn the sticks' horizontal and / or vertical axis round"},
                 {OPT_GYRO, L"GYRO AIM", on_off(settings.gyro),
                  gyro_pad ? L"Point the gamepad to aim, together with the sticks"
                           : L"Point the gamepad to aim (DualSense, DualShock 4, Switch Pro).  None connected"},
@@ -601,6 +611,8 @@ void Frontend::activate(const Item& it, int dir) {
         push(Action::SettingsChanged);
         break;
     case OPT_POINTER: settings.pointer_sight = !settings.pointer_sight; push(Action::SettingsChanged); break;
+    case OPT_PAD_AIM: settings.pad_lever = !settings.pad_lever; push(Action::SettingsChanged); break;
+    case OPT_PAD_INVERT: settings.pad_invert = (settings.pad_invert + dir + 4) % 4; push(Action::SettingsChanged); break;
     case OPT_MICE: settings.second_mouse = !settings.second_mouse; push(Action::SettingsChanged); break;
     case OPT_PAD_SPEED:
         settings.pad_speed = dir > 0 && settings.pad_speed == 10 && wrap_ ? 1 : std::clamp(settings.pad_speed + dir, 1, 10);

@@ -201,6 +201,8 @@ void Gamepads::poll(const GamepadSettings& set, bool focused, bool menu) {
         stick(p, SDL_GAMEPAD_AXIS_LEFTX, SDL_GAMEPAD_AXIS_LEFTY, ax, ay, tilt);
         float lx = ax, ly = ay;   // the left stick alone, for the menus
         stick(p, SDL_GAMEPAD_AXIS_RIGHTX, SDL_GAMEPAD_AXIS_RIGHTY, ax, ay, tilt);
+        const float inv_x = set.invert & 1 ? -1.0f : 1.0f, inv_y = set.invert & 2 ? -1.0f : 1.0f;   // not in the menus
+        ax *= inv_x, ay *= inv_y;
         bool any = lt || rt || tilt > 0 || std::fabs(gdx) + std::fabs(gdy) > 0.002f;
         for (int b = 0; b < 32; b++) any |= now_down[b];
         if (any && focused) st.last_used = now_;
@@ -255,11 +257,12 @@ void Gamepads::poll(const GamepadSettings& set, bool focused, bool menu) {
             float pull_x = 0, pull_y = 0;
             assist(s, st, set, dt, tilt, dx, dy, gdx, gdy, pull_x, pull_y);
             dx += gdx + pull_x, dy += gdy + pull_y;
-            // SWT_PAD_ABSOLUTE: the stick is the lever itself (absolute position).
+            // STICK AIM LEVER (or SWT_PAD_ABSOLUTE): the stick is the lever itself
+            // (absolute position, back to the centre when let go), as on the cabinet.
             // By default the sticks move the sight as in Lost World and the lever
             // follows it (the sight stays where it is left)
-            static const bool absolute = getenv("SWT_PAD_ABSOLUTE") != nullptr;
-            if (kAnalogJoystick && absolute) {
+            static const bool absolute_env = getenv("SWT_PAD_ABSOLUTE") != nullptr;
+            if (kAnalogJoystick && (set.lever || absolute_env)) {
                 float lvx = 0, lvy = 0;
                 for (auto [axx, axy] : {std::pair{SDL_GAMEPAD_AXIS_LEFTX, SDL_GAMEPAD_AXIS_LEFTY},
                                         std::pair{SDL_GAMEPAD_AXIS_RIGHTX, SDL_GAMEPAD_AXIS_RIGHTY}}) {
@@ -268,11 +271,12 @@ void Gamepads::poll(const GamepadSettings& set, bool focused, bool menu) {
                     if (m < STICK_DEAD) continue;
                     float t = std::min((m - STICK_DEAD) / (0.95f - STICK_DEAD), 1.0f);   // full a little before the edge
                     t *= 0.2f + 0.8f * t;   // gentle near the centre, still the whole travel at the edge
-                    lvx += sx / m * t, lvy += sy / m * t;
+                    lvx += sx / m * t * inv_x, lvy += sy / m * t * inv_y;
                 }
                 // A real lever takes a moment to swing over: the position follows
-                // the stick at most LEVER_SPEED per second (centre to side in 1/3 s)
-                constexpr float LEVER_SPEED = 1.5f;
+                // the stick at most LEVER_SPEED per second (centre to side in 1/3 s
+                // at STICK SPEED 5; each step about 19% faster or slower)
+                const float LEVER_SPEED = 1.5f * speed_step(set.stick_speed, 4.0f);
                 float tx = std::clamp(0.5f + 0.5f * lvx, 0.0f, 1.0f), ty = std::clamp(0.5f + 0.5f * lvy, 0.0f, 1.0f);
                 float step = LEVER_SPEED * dt;
                 st.aim_x += std::clamp(tx - st.aim_x, -step, step);

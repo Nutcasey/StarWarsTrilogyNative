@@ -189,7 +189,7 @@ int main(int argc, char** argv) {
         options_from_settings(g_opt, ini);
         g_pointer_sight = ini.pointer_sight;
         g_sight_scale = ini.sight_size / 100.0f;
-        g_pad_settings = {ini.pad_speed, ini.gyro, ini.gyro_speed, ini.vibration, ini.aim_assist};
+        g_pad_settings = {ini.pad_speed, ini.gyro, ini.gyro_speed, ini.vibration, ini.aim_assist, ini.pad_lever, ini.pad_invert};
     }
     int exit_code = 0;
     if (!parse_options(g_opt, argc, argv, nullptr, exit_code)) return exit_code;
@@ -907,7 +907,7 @@ int main(int argc, char** argv) {
                     g_sight_scale = s.sight_size / 100.0f;
                     if (!s.second_mouse) raw_mice::reset();
                     renderer.set_picture(s.saturation / 100.0f, s.gamma / 100.0f);
-                    g_pad_settings = {s.pad_speed, s.gyro, s.gyro_speed, s.vibration, s.aim_assist};
+                    g_pad_settings = {s.pad_speed, s.gyro, s.gyro_speed, s.vibration, s.aim_assist, s.pad_lever, s.pad_invert};
                     s.save("save/settings.ini");
                     break;
                 default: break;

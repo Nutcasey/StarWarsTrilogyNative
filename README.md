@@ -33,7 +33,7 @@
 <table>
   <tr>
     <td><img src="docs/img/menu.jpg" alt="Main menu"></td>
-    <td><img src="docs/img/death_star.jpg" alt="The Death Star with its lights, TIE fighters ahead"></td>
+    <td><img src="docs/img/death_star.jpg" alt="X-wings closing in on the Death Star"></td>
   </tr>
   <tr>
     <td><img src="docs/img/hoth.jpg" alt="Walkers on Hoth in true widescreen"></td>

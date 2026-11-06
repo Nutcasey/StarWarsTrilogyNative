@@ -55,16 +55,23 @@ files like `epr-21379a.17` and `mpr-21339.01`. Other versions of the game will n
 
 ## Install
 
-You need Windows 10/11 (64-bit), a GPU with a Vulkan 1.3 driver (most cards and integrated
-graphics from 2016 on, with current drivers), [Python 3](https://www.python.org/downloads/)
-and [Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022)
-with the *Desktop development with C++* workload.
+You need Windows 10/11 (64-bit) and a GPU with a Vulkan 1.3 driver (most cards and integrated
+graphics from 2016 on, with current drivers).
+
+1. Download this repository (green **Code** button > **Download ZIP**) and unzip it.
+2. Put `swtrilgy.zip` in the folder.
+3. Double-click `install.bat`. It installs what the build needs with winget, Python 3 and the C++
+   tools of Build Tools for Visual Studio 2022 (a few GB, accept the Windows prompt), then builds
+   the game. It takes a while the first time; you can also drop `swtrilgy.zip` on `install.bat`.
+4. Play with `StarWarsTrilogy.exe`.
 
 <details>
-<summary>Smaller install of the Build Tools (only what the build uses)</summary>
+<summary>Manual install</summary>
 
-The full workload is over 6 GB. The build only needs the MSVC compiler, CMake and a
-Windows SDK. In a command prompt:
+Install [Python 3](https://www.python.org/downloads/) and
+[Build Tools for Visual Studio 2022](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022)
+with the *Desktop development with C++* workload. The full workload is over 6 GB; the build only
+needs the MSVC compiler, CMake and a Windows SDK. In a command prompt:
 
 ```
 winget install Microsoft.VisualStudio.2022.BuildTools --override "--passive --wait --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.VC.CMake.Project --add Microsoft.VisualStudio.Component.Windows11SDK.22621"
@@ -73,12 +80,10 @@ winget install Microsoft.VisualStudio.2022.BuildTools --override "--passive --wa
 Or in the Visual Studio Installer, choose *Individual components* instead of the workload and
 tick *MSVC v143 - VS 2022 C++ x64/x86 build tools (Latest)*, *C++ CMake tools for Windows*
 and one *Windows 11 SDK* (it works on Windows 10 too).
-</details>
 
-1. Download or clone this repository.
-2. Put `swtrilgy.zip` next to `build.bat` (or pass its path: `build.bat D:\roms\swtrilgy.zip`).
-3. Run `build.bat` once. It takes a few minutes and downloads SDL3 and NVIDIA DLSS on the first run.
-4. Play with `StarWarsTrilogy.exe`.
+Then run `build.bat` with `swtrilgy.zip` next to it (or pass its path: `build.bat D:\roms\swtrilgy.zip`).
+It downloads SDL3 and NVIDIA DLSS on the first run.
+</details>
 
 ### Update
 

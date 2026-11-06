@@ -7,6 +7,10 @@
   Not an emulator: the original code, recompiled to C++, with a modern Vulkan renderer.
 </p>
 
+<p align="center">
+  <img src="docs/img/yavin.jpg" alt="X-wings over Yavin in the opening, engines lit" width="100%">
+</p>
+
 ## What you get
 
 - **True widescreen** 16:9, not stretched, at any resolution (21:9 too, with `--aspect 21:9`).
@@ -25,6 +29,17 @@
 - **Mouse, gamepad (gyro too) or light gun**, with aim assist on a gamepad and the cabinet's force feedback as rumble.
 - **Quality presets** (Options > Display > Quality) to set the costly effects at once, from laptops to RTX cards.
 - **Achievements and stats** in Records.
+
+<table>
+  <tr>
+    <td><img src="docs/img/menu.jpg" alt="Main menu"></td>
+    <td><img src="docs/img/death_star.jpg" alt="The Death Star with its lights, TIE fighters ahead"></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/hoth.jpg" alt="Walkers on Hoth in true widescreen"></td>
+    <td><img src="docs/img/endor.jpg" alt="Speeder bike chase on Endor"></td>
+  </tr>
+</table>
 
 ## Coming soon
 

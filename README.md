@@ -105,7 +105,7 @@ starts the game again once it is rebuilt. Turn it off in OPTIONS > DISPLAY > CHE
 
 | | Mouse and keyboard | Gamepad |
 |---|---|---|
-| Aim | Move (or the arrow keys) | Sticks or gyro |
+| Aim | Move (or the arrow keys) | Sticks, or gyro (turn on GYRO AIM in CONTROLS) |
 | Fire (trigger) | Left click or Space | R2 / R1 / A |
 | Second trigger | Right click or Ctrl | L2 / L1 / B |
 | EVENT button | E or middle click | X |

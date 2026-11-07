@@ -23,7 +23,7 @@ struct SDL_Gamepad;
 
 struct GamepadSettings {
     int stick_speed = 5;   // 1..10: sight speed with the sticks
-    bool gyro = true;      // the gyroscope moves the sight
+    bool gyro = false;     // the gyroscope moves the sight (off until turned on: it surprised stick players)
     int gyro_speed = 5;    // 1..10
     int rumble = 2;        // vibration: 0 off, 1 low, 2 medium, 3 high
     int assist = 1;        // aim assist: 0 off, 1 low, 2 medium, 3 high

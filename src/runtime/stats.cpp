@@ -233,6 +233,7 @@ struct Tracker {
         int md = rd8(MODE);
         uint32_t st = rd32(TOP_STATE);
         g_swt_duel = md == 9 && st >= 10 && st <= 13 && !getenv("SWT_DUEL_ORIGINAL");
+        g_swt_top_state = md == 9 ? int(st) : -1;
         int de = int16_t(rd16(P_DESTROYED)), ap = int16_t(rd16(P_APPEARED)), sh = int16_t(rd16(P_SHIELD));
         int score = int(rd32(P_SCORE));
         std::lock_guard<std::mutex> lock(mutex);

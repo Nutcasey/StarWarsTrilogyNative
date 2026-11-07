@@ -608,6 +608,7 @@ int main(int argc, char** argv) {
         // (not on the duel's briefing: 2D text at the top)
         if (g_swt_duel && lit(20, 460) < 20) out.hud_band = true;
         r3d_set_swt_duel(g_swt_duel);
+        r3d_set_swt_stage(g_swt_top_state);
         int offset[3];
         TileGen::front_offset(out.vram.data(), offset);
         if (!pack2d.empty())

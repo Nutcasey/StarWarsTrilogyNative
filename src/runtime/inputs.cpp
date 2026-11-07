@@ -9,6 +9,7 @@
 Inputs g_inputs;
 std::atomic<bool> g_select_aim{false}, g_fixed_aim{false};
 std::atomic<bool> g_swt_duel{false};
+std::atomic<int> g_swt_top_state{-1};
 std::atomic<float> g_sight_scale{0.8f};
 std::atomic<float> g_ffb_shake{0.0f};
 

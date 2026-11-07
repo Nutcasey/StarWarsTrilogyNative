@@ -22,8 +22,14 @@ if not exist "%ZIP%" goto no_rom
 python tools\romtool.py "%ZIP%" data || goto fail
 :rom_ok
 python tools\recomp.py data\crom.bin build\gen || goto fail
-rem NVIDIA DLSS SDK (not in the repository): fetched from NVIDIA's GitHub the first time
-if not exist third_party\ngx\lib\nvsdk_ngx_d.lib (
+rem NVIDIA DLSS SDK (not in the repository): fetched from NVIDIA's GitHub the first time.
+rem Every file is checked, not only the library: a third_party\ngx left incomplete
+rem (an interrupted download, files copied by hand) is fetched again (issue #32)
+set "NGX_OK=1"
+for %%f in (include\nvsdk_ngx.h include\nvsdk_ngx_defs.h include\nvsdk_ngx_defs_vk.h include\nvsdk_ngx_helpers.h include\nvsdk_ngx_helpers_vk.h include\nvsdk_ngx_loader.h include\nvsdk_ngx_params.h include\nvsdk_ngx_vk.h lib\nvsdk_ngx_d.lib bin\nvngx_dlss.dll) do (
+    if not exist third_party\ngx\%%f set "NGX_OK="
+)
+if not defined NGX_OK (
     call tools\get_dlss.bat || goto fail
 )
 

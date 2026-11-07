@@ -13,6 +13,12 @@
 #   # ...          a comment, never shown
 # Newest entry at the top. Keep each one short: about ten lines fit.
 
+[6] 2026-11-08
+- OPTIONS > DISPLAY > WIDESCREEN: 4:3, 16:9, 21:9, 32:9, or 48:9 for three monitors side by side
+- install.bat adds the Windows SDK when it is missing; build.bat says when there is none
+- build.bat downloads the DLSS files again when one of them is missing
+- If the 3D renderer cannot start, the log says which step failed
+
 [5] 2026-11-07
 - The gamepad sticks respond better: small pushes move the sight, so it no longer feels laggy
 - STICK AIM LEVER swings over faster

@@ -25,6 +25,7 @@
 
 struct FrontendSettings {
     bool fullscreen = false;
+    int aspect = 1;    // widest 3D view: 0 4:3 (original), 1 16:9, 2 21:9, 3 32:9, 4 48:9 (MAX_ASPECT in settings_bridge.cpp)
     int volume = 5;    // 0..10 (output gain): the sound effects and voices
     int music = 5;     // 0..10: the music board's gain
     int speakers = 0;  // 0 stereo, 1 surround 4.0, 2 headphones (AudioStream::Speakers)
@@ -133,6 +134,7 @@ private:
         RECORDS, DEBUG, DEBUG_STAGE, DEBUG_PHASE, MORE_GAMES, LOST_WORLD,
         OPT_QUALITY, OPT_DISPLAY, OPT_VOLUME, OPT_MUSIC, OPT_SPEAKERS, OPT_REAR, OPT_SAMPLES, OPT_AA, OPT_HAZE, OPT_BLOOM, OPT_AO, OPT_SKY, OPT_SUN, OPT_SHADOWS, OPT_SHAFTS, OPT_SOFT, OPT_HDR, OPT_RELIEF, OPT_SHARPEN, OPT_TEXT, OPT_CROSS, OPT_MICE,
         OPT_SAT, OPT_GAMMA, OPT_MOTION, OPT_PAD_SPEED, OPT_GYRO, OPT_GYRO_SPEED, OPT_VIBRATION, OPT_ASSIST, OPT_RT, OPT_MENU_MUSIC, EXTRA, DOGFIGHT, OPT_POINTER, OPT_SIGHT, OPT_PAD_AIM, OPT_PAD_INVERT, OPT_UPDATES,
+        OPT_ASPECT,
     };
     struct Item {
         Id id;

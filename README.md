@@ -9,7 +9,7 @@
 
 ## What you get
 
-- **True widescreen** 16:9, not stretched, at any resolution (21:9 too, with `--aspect 21:9`).
+- **True widescreen** 16:9, not stretched, at any resolution (21:9, 32:9 and 48:9 for three monitors too: OPTIONS > DISPLAY > WIDESCREEN).
 - **Ray-traced sun shadows** and ambient occlusion, plus distance haze, bloom, light shafts and
   HDR lighting.
 - **New looks, made for this port**:

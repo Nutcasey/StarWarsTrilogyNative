@@ -8,6 +8,7 @@
 #include <cstring>
 #include <ctime>
 #include <initializer_list>
+#include <iterator>
 #include <thread>
 
 #include <shellapi.h>
@@ -162,6 +163,10 @@ int FrontendSettings::quality() const {
     return CUSTOM;
 }
 
+// settings.ini's words for FrontendSettings::aspect
+static const char* const ASPECT_WORDS[] = {"4:3", "16:9", "21:9", "32:9", "48:9"};
+static constexpr int ASPECT_COUNT = int(std::size(ASPECT_WORDS));
+
 void FrontendSettings::load(const char* path) {
     FILE* f = fopen(path, "r");
     if (!f) return;
@@ -180,6 +185,10 @@ void FrontendSettings::load(const char* path) {
         std::string k = key, v = value;
         bool on = v == "1" || v == "on" || v == "true";
         if (k == "fullscreen") fullscreen = on;
+        else if (k == "aspect") {
+            for (int i = 0; i < ASPECT_COUNT; i++)
+                if (v == ASPECT_WORDS[i]) aspect = i;
+        }
         else if (k == "volume") volume = std::clamp(atoi(value), 0, 10);
         else if (k == "music") music = std::clamp(atoi(value), 0, 10);
         else if (k == "speakers") speakers = v == "surround" ? 1 : v == "headphones" ? 2 : 0;
@@ -237,6 +246,7 @@ void FrontendSettings::save(const char* path) const {
             gamma / 100.0, smooth ? "smooth" : "original", SPEAKERS[speakers], rear_boost, cubic_samples ? "cubic" : "linear",
             pad_speed, gyro, gyro_speed, BLOOM[vibration], BLOOM[aim_assist], RT_MODES[ray_tracing],
             splash, menu_music, pointer_sight ? "sight" : "lever", sight_size, pad_lever ? "lever" : "sight", INVERT[pad_invert]);
+    fprintf(f, "aspect = %s\n", ASPECT_WORDS[aspect]);
     fprintf(f, "check_updates = %d\nnews_seen = %d\n", check_updates, news_seen);
     if (!lost_world_path.empty()) fprintf(f, "lost_world_path = %s\n", lost_world_path.c_str());
     fclose(f);
@@ -351,7 +361,7 @@ const wchar_t* const Frontend::TAB_NAMES[Frontend::TAB_COUNT] = {L"DISPLAY", L"G
 // soft particles, surface detail).
 // Tabs past VISIBLE_OPTIONS rows scroll.
 const Frontend::OptionTab Frontend::OPTION_TABS[] = {
-    {OPT_QUALITY, DISPLAY_TAB}, {OPT_DISPLAY, DISPLAY_TAB}, {OPT_MOTION, DISPLAY_TAB}, {OPT_AA, DISPLAY_TAB},
+    {OPT_QUALITY, DISPLAY_TAB}, {OPT_DISPLAY, DISPLAY_TAB}, {OPT_ASPECT, DISPLAY_TAB}, {OPT_MOTION, DISPLAY_TAB}, {OPT_AA, DISPLAY_TAB},
     {OPT_SAT, DISPLAY_TAB}, {OPT_GAMMA, DISPLAY_TAB}, {OPT_SHARPEN, DISPLAY_TAB}, {OPT_UPDATES, DISPLAY_TAB},
     {OPT_SUN, LIGHTING_TAB}, {OPT_SHADOWS, LIGHTING_TAB}, {OPT_RT, LIGHTING_TAB}, {OPT_HDR, LIGHTING_TAB},
     {OPT_AO, LIGHTING_TAB}, {OPT_BLOOM, LIGHTING_TAB}, {OPT_HAZE, LIGHTING_TAB},
@@ -462,6 +472,13 @@ std::vector<Frontend::Item> Frontend::items() const {
         wchar_t gamma_text[16];
         swprintf(gamma_text, 16, L"%.2f", settings.gamma / 100.0);
         static const wchar_t* const RT_MODES[3] = {L"OFF", L"SHADOWS", L"SHADOWS + AO"};
+        static const wchar_t* const ASPECT_NAMES[5] = {L"4:3 (ORIGINAL)", L"16:9", L"21:9", L"32:9", L"48:9"};
+        static const wchar_t* const ASPECT_HINTS[5] = {
+            L"The arcade's own 4:3 picture, with bars at the sides",
+            L"Widest 3D view 16:9.  Narrower windows show less, never stretched",
+            L"Widest 3D view 21:9: fills ultrawide monitors (2560x1080, 3440x1440)",
+            L"Widest 3D view 32:9: fills super ultrawide monitors (3840x1080, 5120x1440)",
+            L"Widest 3D view 48:9: fills three monitors side by side (5760x1080, 7680x1440)"};
         static const wchar_t* const QUALITY_NAMES[5] = {L"LOW", L"MEDIUM", L"HIGH", L"ULTRA", L"CUSTOM"};
         static const wchar_t* const QUALITY_HINTS[5] = {
             L"Laptops and integrated graphics: no shadows, ambient occlusion or MSAA, low bloom",
@@ -476,6 +493,7 @@ std::vector<Frontend::Item> Frontend::items() const {
         std::wstring pads = gamepads.empty() ? L"No gamepad connected" : L"Connected: " + gamepads;
         std::vector<Item> all = {{OPT_DISPLAY, L"DISPLAY", settings.fullscreen ? L"FULLSCREEN" : L"WINDOW",
                  pad_prompts ? L"Window or full screen" : L"Window or full screen (also F11 or Alt+Enter)"},
+                {OPT_ASPECT, L"WIDESCREEN", ASPECT_NAMES[settings.aspect], ASPECT_HINTS[settings.aspect]},
                 {OPT_MOTION, L"MOTION", settings.smooth ? L"SMOOTH" : L"ORIGINAL",
                  L"Smooth: the 3D is also drawn between the game's 57.5 frames, at your monitor's refresh rate"},
                 {OPT_VOLUME, L"EFFECTS", std::to_wstring(settings.volume), L"Volume of the sound effects and voices"},
@@ -651,6 +669,7 @@ void Frontend::activate(const Item& it, int dir) {
         settings.music = dir > 0 && settings.music == 10 && wrap_ ? 0 : std::clamp(settings.music + dir, 0, 10);
         push(Action::SettingsChanged);
         break;
+    case OPT_ASPECT: settings.aspect = (settings.aspect + dir + 5) % 5; push(Action::SettingsChanged); break;
     case OPT_UPDATES: settings.check_updates = !settings.check_updates; push(Action::SettingsChanged); break;
     case OPT_MENU_MUSIC: settings.menu_music = !settings.menu_music; push(Action::SettingsChanged); break;
     case OPT_SPEAKERS: settings.speakers = (settings.speakers + dir + 3) % 3; push(Action::SettingsChanged); break;

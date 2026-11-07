@@ -21,13 +21,16 @@ constexpr float RUMBLE_STRENGTH[4] = {0.0f, 0.45f, 0.75f, 1.0f};
 float speed_step(int v, float per_doubling) { return std::exp2(float(v - 5) / per_doubling); }
 
 // A stick with a round dead zone, its travel mapped to 0..1 on a curve that
-// is gentle near the centre (fine aim) and steep at the edge (fast moves)
+// is gentle near the centre (fine aim) and steep at the edge (fast moves).
+// Not too gentle: with a cube the first half of the stick barely moved the
+// sight, and together with the game's own sight trailing the lever it felt
+// like lag (half way now gives a third of the speed, was a fifth)
 void stick(SDL_Gamepad* p, SDL_GamepadAxis ax, SDL_GamepadAxis ay, float& x, float& y, float& tilt) {
     float sx = float(SDL_GetGamepadAxis(p, ax)) / 32767.0f, sy = float(SDL_GetGamepadAxis(p, ay)) / 32767.0f;
     float m = std::sqrt(sx * sx + sy * sy);
     if (m < STICK_DEAD) return;
     float t = std::min((m - STICK_DEAD) / (STICK_FULL - STICK_DEAD), 1.0f);
-    float c = 0.2f * t + 0.8f * t * t * t;
+    float c = 0.3f * t + 0.7f * t * t;
     x += sx / m * c;
     y += sy / m * c;
     tilt = std::max(tilt, t);
@@ -275,9 +278,10 @@ void Gamepads::poll(const GamepadSettings& set, bool focused, bool menu) {
                     lvx += sx / m * t * inv_x, lvy += sy / m * t * inv_y;
                 }
                 // A real lever takes a moment to swing over: the position follows
-                // the stick at most LEVER_SPEED per second (centre to side in 1/3 s
-                // at STICK SPEED 5; each step about 19% faster or slower)
-                const float LEVER_SPEED = 1.5f * speed_step(set.stick_speed, 4.0f);
+                // the stick at most LEVER_SPEED per second (centre to side in 1/6 s
+                // at STICK SPEED 5; each step about 19% faster or slower). The
+                // game's sight already trails the lever, so more than this felt late
+                const float LEVER_SPEED = 3.0f * speed_step(set.stick_speed, 4.0f);
                 float tx = std::clamp(0.5f + 0.5f * lvx, 0.0f, 1.0f), ty = std::clamp(0.5f + 0.5f * lvy, 0.0f, 1.0f);
                 float step = LEVER_SPEED * dt;
                 st.aim_x += std::clamp(tx - st.aim_x, -step, step);

@@ -34,8 +34,9 @@ if not defined NGX_OK (
 )
 
 rem Visual Studio 2022 or later (Build Tools or any edition) with the C++ tools and
-rem its CMake
+rem its CMake, and a Windows SDK
 call tools\find_vs.bat
+if errorlevel 2 goto no_sdk
 if not exist "%VSDIR%\VC\Auxiliary\Build\vcvars64.bat" goto no_vs
 call "%VSDIR%\VC\Auxiliary\Build\vcvars64.bat" >nul || goto fail
 set "CMAKE=%VSDIR%\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
@@ -95,4 +96,8 @@ goto fail
 :no_vs
 echo Visual Studio 2022 with the x64 C++ tools and CMake not found.
 echo Run install.bat instead: it installs them, then builds.
+goto fail
+:no_sdk
+echo Visual Studio is in "%VSDIR%" but there is no Windows SDK. Run install.bat: it adds
+echo it. Or add "Windows 11 SDK" in the Visual Studio Installer ^(Individual components^).
 goto fail

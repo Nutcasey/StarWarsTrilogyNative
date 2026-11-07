@@ -784,7 +784,22 @@ void R3DSceneBuilder::model(uint32_t addr, const Mat& m, const Attribs& a) {
                     if (!translucent) emit_to(opaque_, opaque_keys_, q, poly_key);
                     if (translucent || tex_alpha) emit_to(trans_, trans_keys_, q, poly_key | (1ull << 31));
                 };
-                if (facing <= 0) emit(out);
+                // SWT_HIDE_TEX=a,b,... (debugging aid): polygons with those texture
+                // words (as out/scene.txt and the F9 .txt print them) are not drawn
+                static const std::vector<uint32_t> hide_tex = [] {
+                    std::vector<uint32_t> list;
+                    if (const char* e = getenv("SWT_HIDE_TEX"))
+                        for (const char* q = e; *q;) {
+                            char* end = nullptr;
+                            unsigned long w = strtoul(q, &end, 16);
+                            if (end == q) break;
+                            list.push_back(uint32_t(w));
+                            q = *end ? end + 1 : end;
+                        }
+                    return list;
+                }();
+                if (!hide_tex.empty() && std::find(hide_tex.begin(), hide_tex.end(), tex) != hide_tex.end()) {
+                } else if (facing <= 0) emit(out);
                 else if (double_sided) {
                     for (int i = 0; i < nverts; i++)
                         for (int k = 0; k < 3; k++) out[i].nrm[k] = -out[i].nrm[k];

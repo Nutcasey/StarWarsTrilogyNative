@@ -72,6 +72,7 @@ void r3d_strip_letterbox(R3DScene& out) {
 }
 
 static std::atomic<bool> g_duel{false};   // a lightsaber duel (r3d_set_swt_duel)
+static std::atomic<int> g_stage{-1};      // the top state while playing (r3d_set_swt_stage)
 
 void r3d_share_world(R3DScene& out) {
     auto& vps = out.viewports;
@@ -170,9 +171,15 @@ void r3d_share_world(R3DScene& out) {
         for (uint32_t k = v.trans_first; k < v.trans_first + v.trans_count; k++) out.vertices[k].flags |= R3D_WORLD;
     }
     // The Death Star (its textures, from F9 snapshots of Yavin) in the world
-    // and the viewports sharing it
+    // and the viewports sharing it. Only in Yavin (top state 2/3) and the last
+    // space stage (8/9): the texture words are slots that each stage fills with
+    // its own pictures, and in Hoth's ice cave (snowtroopers before the Falcon)
+    // 0x04A80200 is its rock, which came out as the Death Star's night side,
+    // almost black (issue #23). Unknown (-1: a replay, the attract): as before
     static const bool no_ds = getenv("SWT_PLAIN_DEATH_STAR") != nullptr;
     if (no_ds) return;
+    int stage = g_stage;
+    if (stage >= 0 && !(stage >= 2 && stage <= 3) && !(stage >= 8 && stage <= 9)) return;
     // The trench (its walls: texture page 0x0278, thousands of triangles; F9
     // snapshots of Yavin's third phase): the game builds it a stretch at a
     // time, the new stretch popping up at the far end. It fades into the dark
@@ -218,6 +225,7 @@ void r3d_widen_screen_fills(R3DScene& out, float wide) {
 }
 
 void r3d_set_swt_duel(bool on) { g_duel = on; }
+void r3d_set_swt_stage(int top_state) { g_stage = top_state; }
 
 void r3d_anchor_swt_hud(R3DScene& out) {
     if (out.viewports.empty()) return;

@@ -13,6 +13,11 @@
 #   # ...          a comment, never shown
 # Newest entry at the top. Keep each one short: about ten lines fit.
 
+[5] 2026-11-07
+- The gamepad sticks respond better: small pushes move the sight, so it no longer feels laggy
+- STICK AIM LEVER swings over faster
+- GYRO AIM now starts off (turn it on in OPTIONS > CONTROLS); if you played before, your setting stays as it was
+
 [4] 2026-11-07
 - The ice cave in the Hoth base (snowtroopers before the Falcon) is no longer drawn almost black
 

@@ -213,7 +213,7 @@ if(APPLE)
     # other and integers wrap around
     set(MAC_OPTIONS -ffp-contract=off -fno-strict-aliasing -fwrapv)
     target_compile_options(StarWarsTrilogy PRIVATE ${MAC_OPTIONS}
-        "$<$<COMPILE_LANGUAGE:CXX,OBJCXX>:SHELL:-include ${MAC_DIR}/compat.h>"
+        "$<$<COMPILE_LANGUAGE:CXX,OBJCXX>:SHELL:-include \"${MAC_DIR}/compat.h\">"
         $<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>)
     add_custom_command(TARGET StarWarsTrilogy POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different ${MOLTENVK_DYLIB} $<TARGET_FILE_DIR:StarWarsTrilogy>/libMoltenVK.dylib)
@@ -242,7 +242,7 @@ if(LW_TESTS)
     enable_testing()
     add_executable(tilegen_test tests/tilegen_test.cpp tests/stubs.cpp src/video/tilegen.cpp)
     add_executable(fnv_test tests/fnv_test.cpp)
-    add_executable(options_test tests/options_test.cpp src/runtime/options.cpp)
+    add_executable(options_test tests/options_test.cpp src/runtime/options.cpp src/runtime/settings_bridge.cpp)
     add_executable(audio_stream_test tests/audio_stream_test.cpp src/audio/audio_stream.cpp)
     add_executable(rom_zip_test tests/rom_zip_test.cpp src/runtime/rom_zip.cpp ${MINIZ_DIR}/miniz.c)
     add_executable(jtag_test tests/jtag_test.cpp src/runtime/jtag.cpp)

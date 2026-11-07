@@ -7,6 +7,8 @@
 #include <vector>
 
 #include "options.h"
+#include "settings_bridge.h"
+#include "frontend.h"
 
 static int g_failed = 0;
 #define CHECK(cond)                                                     \
@@ -72,6 +74,27 @@ int main() {
         CHECK(!q.dlaa && q.msaa == 4 && q.auto_scripts.size() == 2);
         CHECK(q.auto_scripts[1] == "start@20");
         CHECK(q.traces.size() == 1 && q.diff == "10F650@300" && q.replay == "out/snap/snap_1.bin");
+    }
+    {   // saved widescreen levels reach the runtime; command-line options still win
+        const float aspects[] = {4.0f / 3.0f, 16.0f / 9.0f, 2.4f, 3.6f, 6.0f};
+        for (int level = 0; level < 5; level++) {
+            FrontendSettings settings;
+            settings.aspect = level;
+            Options o;
+            options_from_settings(o, settings);
+            CHECK(near(o.max_aspect, aspects[level]));
+            FrontendSettings shown;
+            settings_from_options(shown, o);
+            CHECK(shown.aspect == level);
+        }
+        FrontendSettings settings;
+        settings.aspect = 0;
+        Options o;
+        options_from_settings(o, settings);
+        CHECK(parse(o, {"--aspect", "2.6"}) && near(o.max_aspect, 2.6f));
+        settings_from_options(settings, o);
+        options_from_settings(o, settings);
+        CHECK(near(o.max_aspect, 2.6f));   // the menu keeps a custom ratio within a named level
     }
     {   // run modes
         Options o;

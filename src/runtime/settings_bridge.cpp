@@ -27,10 +27,10 @@ void options_from_settings(Options& o, const FrontendSettings& ini) {
     o.supersample = float(ini.supersample) / 100.0f;
 #else
     o.dlaa = ini.aa == 1;
-    int aspect = std::clamp(ini.aspect, 0, 4);
-    if (aspect != aspect_level(o.max_aspect)) o.max_aspect = MAX_ASPECT[aspect];   // --aspect 2.6 stays as 21:9
     if (ini.aa == 2) o.msaa = 1;
 #endif
+    int aspect = std::clamp(ini.aspect, 0, 4);
+    if (aspect != aspect_level(o.max_aspect)) o.max_aspect = MAX_ASPECT[aspect];   // --aspect 2.6 stays as 21:9
     o.haze = ini.haze ? 1.0f : 0.0f;
     o.bloom = BLOOM_STRENGTH[ini.bloom];
     o.ao = ini.ao ? 1.0f : 0.0f;

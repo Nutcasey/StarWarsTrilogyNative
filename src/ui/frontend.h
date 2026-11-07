@@ -50,7 +50,7 @@ struct FrontendSettings {
     int saturation = 80;    // colour saturation in % (100 = original; 80 by default)
     int gamma = 100;        // gamma x 100 (100 = original, higher = brighter)
     int pad_speed = 5;      // gamepad sight speed with the sticks, 1..10
-    bool gyro = true;       // the gamepad's gyroscope moves the sight
+    bool gyro = false;      // the gamepad's gyroscope moves the sight (CONTROLS > GYRO AIM turns it on)
     int gyro_speed = 5;     // 1..10
     int vibration = 2;      // gamepad vibration: 0 off, 1 low, 2 medium, 3 high
     int aim_assist = 1;     // gamepad aim assist: 0 off, 1 low, 2 medium, 3 high

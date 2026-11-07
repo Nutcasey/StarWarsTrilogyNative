@@ -27,12 +27,9 @@ if not exist third_party\ngx\lib\nvsdk_ngx_d.lib (
     call tools\get_dlss.bat || goto fail
 )
 
-rem Visual Studio 2022 (Build Tools or any edition) with the C++ tools and its
-rem CMake, found with vswhere; the Build Tools default path if vswhere is missing
-set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
-set "VSDIR="
-if exist "%VSWHERE%" for /f "usebackq delims=" %%i in (`"%VSWHERE%" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 Microsoft.VisualStudio.Component.VC.CMake.Project -property installationPath`) do set "VSDIR=%%i"
-if "%VSDIR%"=="" set "VSDIR=%ProgramFiles(x86)%\Microsoft Visual Studio\2022\BuildTools"
+rem Visual Studio 2022 or later (Build Tools or any edition) with the C++ tools and
+rem its CMake
+call tools\find_vs.bat
 if not exist "%VSDIR%\VC\Auxiliary\Build\vcvars64.bat" goto no_vs
 call "%VSDIR%\VC\Auxiliary\Build\vcvars64.bat" >nul || goto fail
 set "CMAKE=%VSDIR%\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe"
@@ -90,6 +87,6 @@ echo A cmake.exe in PATH is ignored unless it is 3.27 or newer.
 goto fail
 
 :no_vs
-echo Visual Studio 2022 with the x64 C++ tools and CMake not found ^(looked in "%VSDIR%"^).
+echo Visual Studio 2022 with the x64 C++ tools and CMake not found.
 echo Run install.bat instead: it installs them, then builds.
 goto fail

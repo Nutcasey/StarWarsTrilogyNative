@@ -13,6 +13,11 @@
 #   # ...          a comment, never shown
 # Newest entry at the top. Keep each one short: about ten lines fit.
 
+[3] 2026-11-07
+- The droids in the Hoth base are no longer drawn black
+- install.bat finds the C++ tools right after installing them, before Windows restarts
+- install.bat updates Visual Studio when its CMake is too old to build the game
+
 [2] 2026-11-06
 - The menus show the gamepad's buttons when you use a controller, and the keys again when you use the keyboard
 - Xbox button icons by ElDuderino (CC0)

@@ -1017,7 +1017,8 @@ void Frontend::draw_news() {
         fill(x0, by, x0 + bw, by + bh, sel ? SABER : 0x000000, sel ? 0.34f : 0.45f);
         frame(x0, by, x0 + bw, by + bh, std::max(1, U(sel ? 3.0f : 1.5f)), sel ? 0xEAF6FF : SABER, sel ? 1.0f : 0.55f);
         const Style st = sel ? Style{GOLD_TOP, GOLD_BOTTOM, EDGE, U(2), 1, U(2)} : Style{PALE_TOP, PALE_BOTTOM, EDGE, U(2), 0.95f};
-        text(display(), U(40), LABELS[b], x0 + bw / 2, by + bh / 2 - U(22), 1, st);
+        // (centred on the capitals: at U(40) they are about U(28) tall, U(18) below the box top)
+        text(display(), U(40), LABELS[b], x0 + bw / 2, by + bh / 2 - U(32), 1, st);
     }
     const wchar_t* about = news_button_ == 0
                                ? L"Closes the game, downloads the new version, builds it again (update.bat) and starts it"

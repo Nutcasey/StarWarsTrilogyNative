@@ -286,9 +286,13 @@ void main() {
     // Space (r3d_share_world): the hulls of the films are a weathered light
     // grey, not the game's clean white: whites come down more than the
     // darker panel lines (more texture), with a faint grime from panel to
-    // panel. Not the luminous parts (engines, lasers)
-    if (atm.relief.z > 0.0 && (flags & (WORLD | LUMINOUS | TEXTURED)) == (WORLD | TEXTURED)) {
-        float k = atm.relief.z * ((flags & DEATH_STAR) != 0u ? 0.45 : 1.0);   // the Death Star stays lighter
+    // panel. Not the luminous parts (engines, lasers), nor a planet: it lies
+    // hundreds of thousands of units away (Endor in the last stage: z 150k
+    // to 950k), where ships and the Death Star (Yavin: about 15k) never are,
+    // and its panels of grime were big squares over the clouds
+    float hull_far = 1.0 - smoothstep(40000.0, 80000.0, length(view_pos));
+    if (atm.relief.z > 0.0 && hull_far > 0.0 && (flags & (WORLD | LUMINOUS | TEXTURED)) == (WORLD | TEXTURED)) {
+        float k = atm.relief.z * hull_far * ((flags & DEATH_STAR) != 0u ? 0.45 : 1.0);   // the Death Star stays lighter
         vec3 g = pow(t.rgb, vec3(1.35)) * 0.86;
         float lum = dot(g, vec3(0.2126, 0.7152, 0.0722));
         g = mix(vec3(lum), g, 0.85) * vec3(0.98, 0.985, 1.0);

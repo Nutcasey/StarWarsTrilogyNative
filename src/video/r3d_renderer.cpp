@@ -170,6 +170,11 @@ void R3DRenderer::transition(VkCommandBuffer cmd, Image& img, VkImageLayout to, 
 bool R3DRenderer::init(VkPresenter& vk, float supersample, int msaa, int aniso, bool dlaa) {
     vk_ = &vk;
     dev_ = vk.device();
+    // Every step names itself when it fails, so a report says where it stopped (issue #36)
+    auto fail = [](const char* what) {
+        fprintf(stderr, "[vulkan] 3D renderer: could not create %s\n", what);
+        return false;
+    };
     supersample_ = std::clamp(supersample, 0.5f, 4.0f);
     aniso_ = float(std::clamp(aniso, 0, 16));
     // DLAA does the anti-aliasing itself from aliased single-sample input
@@ -181,33 +186,48 @@ bool R3DRenderer::init(VkPresenter& vk, float supersample, int msaa, int aniso, 
     samples_ = VK_SAMPLE_COUNT_1_BIT;
     for (int s = 2; s <= std::min(msaa, 8); s *= 2)
         if (counts & s) samples_ = VkSampleCountFlagBits(s);
+    // The 3D pass binds the whole texture pack as one array of images; some integrated GPUs
+    // allow fewer images per shader than that, so say it up front when this one does
+    const uint32_t images_needed = TexturePack::MAX_SLOTS + 8;
+    const VkPhysicalDeviceLimits& lim = props.limits;
+    if (lim.maxPerStageDescriptorSamplers < images_needed || lim.maxPerStageDescriptorSampledImages < images_needed ||
+        lim.maxDescriptorSetSamplers < images_needed || lim.maxDescriptorSetSampledImages < images_needed)
+        printf("[vulkan] this GPU allows %u samplers / %u images per shader (%u / %u per set); "
+               "the texture pack needs %u\n",
+               lim.maxPerStageDescriptorSamplers, lim.maxPerStageDescriptorSampledImages,
+               lim.maxDescriptorSetSamplers, lim.maxDescriptorSetSampledImages, images_needed);
 
     const VkImageUsageFlags sampled = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    if (!create_image(texture_ram_, 2048, 2048, VK_FORMAT_R16_UINT, sampled, VK_IMAGE_ASPECT_COLOR_BIT)) return false;
-    if (!create_image(back_, BACK_W, SCREEN_H, VK_FORMAT_B8G8R8A8_UNORM, sampled, VK_IMAGE_ASPECT_COLOR_BIT)) return false;
-    if (!create_image(front_, SCREEN_W, SCREEN_H, VK_FORMAT_B8G8R8A8_UNORM, sampled, VK_IMAGE_ASPECT_COLOR_BIT)) return false;
-    if (!create_buffer(texture_staging_, 2048 * 2048 * 2, VK_BUFFER_USAGE_TRANSFER_SRC_BIT)) return false;
+    if (!create_image(texture_ram_, 2048, 2048, VK_FORMAT_R16_UINT, sampled, VK_IMAGE_ASPECT_COLOR_BIT))
+        return fail("the texture RAM");
+    if (!create_image(back_, BACK_W, SCREEN_H, VK_FORMAT_B8G8R8A8_UNORM, sampled, VK_IMAGE_ASPECT_COLOR_BIT))
+        return fail("the 2D back layer");
+    if (!create_image(front_, SCREEN_W, SCREEN_H, VK_FORMAT_B8G8R8A8_UNORM, sampled, VK_IMAGE_ASPECT_COLOR_BIT))
+        return fail("the 2D front layer");
+    if (!create_buffer(texture_staging_, 2048 * 2048 * 2, VK_BUFFER_USAGE_TRANSFER_SRC_BIT))
+        return fail("the texture staging buffer");
     if (!create_image(text_cells_, TextHD::ROW_TEXELS, TextHD::ROWS, VK_FORMAT_B8G8R8A8_UNORM,
                       sampled, VK_IMAGE_ASPECT_COLOR_BIT))
-        return false;
+        return fail("the text cells");
     if (!create_image(sky_coords_, TileGen::SKY_COORDS_W, TileGen::SKY_COORDS_H, VK_FORMAT_B8G8R8A8_UNORM, sampled,
                       VK_IMAGE_ASPECT_COLOR_BIT))
-        return false;
+        return fail("the sky coordinates");
     if (!create_buffer(layer_staging_, (BACK_W + SCREEN_W) * SCREEN_H * 4 + TEXT_CELLS_BYTES + SKY_COORDS_BYTES,
                        VK_BUFFER_USAGE_TRANSFER_SRC_BIT))
-        return false;
-    if (!create_buffer(vertices_, 8u << 20, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)) return false;
-    if (!create_buffer(atmosphere_uniform_, sizeof(AtmosphereUniform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)) return false;
+        return fail("the layer staging buffer");
+    if (!create_buffer(vertices_, 8u << 20, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT)) return fail("the vertex buffer");
+    if (!create_buffer(atmosphere_uniform_, sizeof(AtmosphereUniform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT))
+        return fail("the atmosphere buffer");
     memset(atmosphere_uniform_.mapped, 0, sizeof(AtmosphereUniform));
 
     // Clear the texture RAM and the 2D layers once
     if (!create_image(shadow_map_, SHADOW_SIZE, SHADOW_SIZE, VK_FORMAT_D32_SFLOAT,
                       VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_IMAGE_ASPECT_DEPTH_BIT))
-        return false;
+        return fail("the shadow map");
     if (!create_image(exposure_, 1, 1, VK_FORMAT_R16_SFLOAT,
                       VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
                       VK_IMAGE_ASPECT_COLOR_BIT))
-        return false;
+        return fail("the exposure image");
     vk.run_once([&](VkCommandBuffer cmd) {
         transition(cmd, shadow_map_, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_ASPECT_DEPTH_BIT);
         VkClearColorValue start{};
@@ -228,18 +248,18 @@ bool R3DRenderer::init(VkPresenter& vk, float supersample, int msaa, int aniso, 
     VkSamplerCreateInfo si{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
     si.magFilter = si.minFilter = VK_FILTER_NEAREST;
     si.addressModeU = si.addressModeV = si.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    vkCreateSampler(dev_, &si, nullptr, &nearest_);
+    if (vkCreateSampler(dev_, &si, nullptr, &nearest_) != VK_SUCCESS) return fail("the samplers");
     si.magFilter = si.minFilter = VK_FILTER_LINEAR;
-    vkCreateSampler(dev_, &si, nullptr, &linear_);
+    if (vkCreateSampler(dev_, &si, nullptr, &linear_) != VK_SUCCESS) return fail("the samplers");
     // Replacement textures: trilinear + anisotropic, repeating (mirroring is done in the shader)
     si.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     si.addressModeU = si.addressModeV = si.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     si.anisotropyEnable = VK_TRUE;
     si.maxAnisotropy = std::min(16.0f, props.limits.maxSamplerAnisotropy);
     si.maxLod = VK_LOD_CLAMP_NONE;
-    vkCreateSampler(dev_, &si, nullptr, &replace_sampler_);
+    if (vkCreateSampler(dev_, &si, nullptr, &replace_sampler_) != VK_SUCCESS) return fail("the samplers");
     si.addressModeU = si.addressModeV = si.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    vkCreateSampler(dev_, &si, nullptr, &overlay_sampler_);
+    if (vkCreateSampler(dev_, &si, nullptr, &overlay_sampler_) != VK_SUCCESS) return fail("the samplers");
 
     // Ray tracing, when the GPU has it: its acceleration structure is built once
     // empty here, so the descriptors always point at a valid one
@@ -269,7 +289,8 @@ bool R3DRenderer::init(VkPresenter& vk, float supersample, int msaa, int aniso, 
     li.pNext = &bfi;
     li.bindingCount = r3d_bindings;
     li.pBindings = b0;
-    vkCreateDescriptorSetLayout(dev_, &li, nullptr, &r3d_set_layout_);
+    if (vkCreateDescriptorSetLayout(dev_, &li, nullptr, &r3d_set_layout_) != VK_SUCCESS)
+        return fail("the 3D descriptor layout");
     li.pNext = nullptr;
     // 5: high-resolution text atlas (only bound when there is one), 6: text cells,
     // 7: alpha of the 3D image (in red), 8: bloom, 9: backdrop replacement coordinates,
@@ -294,15 +315,18 @@ bool R3DRenderer::init(VkPresenter& vk, float supersample, int msaa, int aniso, 
     li.pNext = &bfi;
     li.bindingCount = 14;
     li.pBindings = cb;
-    vkCreateDescriptorSetLayout(dev_, &li, nullptr, &compose_set_layout_);
+    if (vkCreateDescriptorSetLayout(dev_, &li, nullptr, &compose_set_layout_) != VK_SUCCESS)
+        return fail("the composition descriptor layout");
     li.pNext = nullptr;
     // Bloom passes: one source image each
     li.bindingCount = 1;
     li.pBindings = cb;
-    vkCreateDescriptorSetLayout(dev_, &li, nullptr, &bloom_set_layout_);
+    if (vkCreateDescriptorSetLayout(dev_, &li, nullptr, &bloom_set_layout_) != VK_SUCCESS)
+        return fail("the bloom descriptor layout");
     // Ambient occlusion: world depth and the raw occlusion
     li.bindingCount = 2;
-    vkCreateDescriptorSetLayout(dev_, &li, nullptr, &ao_set_layout_);
+    if (vkCreateDescriptorSetLayout(dev_, &li, nullptr, &ao_set_layout_) != VK_SUCCESS)
+        return fail("the AO descriptor layout");
 
     VkDescriptorPoolSize ps[4] = {
         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 36 + TexturePack::MAX_SLOTS + Pack2D::MAX_SLOTS},
@@ -314,20 +338,22 @@ bool R3DRenderer::init(VkPresenter& vk, float supersample, int msaa, int aniso, 
     pi.maxSets = 10;
     pi.poolSizeCount = rt_.ready() ? 4 : 2;
     pi.pPoolSizes = ps;
-    vkCreateDescriptorPool(dev_, &pi, nullptr, &pool_);
+    if (vkCreateDescriptorPool(dev_, &pi, nullptr, &pool_) != VK_SUCCESS) return fail("the descriptor pool");
     VkDescriptorSetAllocateInfo ai{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
     ai.descriptorPool = pool_;
     ai.descriptorSetCount = 1;
     ai.pSetLayouts = &r3d_set_layout_;
-    vkAllocateDescriptorSets(dev_, &ai, &r3d_set_);
+    if (vkAllocateDescriptorSets(dev_, &ai, &r3d_set_) != VK_SUCCESS) return fail("the 3D descriptor set");
     ai.pSetLayouts = &compose_set_layout_;
-    vkAllocateDescriptorSets(dev_, &ai, &compose_set_);
+    if (vkAllocateDescriptorSets(dev_, &ai, &compose_set_) != VK_SUCCESS) return fail("the composition descriptor set");
     ai.pSetLayouts = &bloom_set_layout_;
-    for (VkDescriptorSet& s : bloom_sets_) vkAllocateDescriptorSets(dev_, &ai, &s);
-    vkAllocateDescriptorSets(dev_, &ai, &rays_set_);
-    for (VkDescriptorSet& s : diff_sets_) vkAllocateDescriptorSets(dev_, &ai, &s);
+    for (VkDescriptorSet& s : bloom_sets_)
+        if (vkAllocateDescriptorSets(dev_, &ai, &s) != VK_SUCCESS) return fail("the bloom descriptor sets");
+    if (vkAllocateDescriptorSets(dev_, &ai, &rays_set_) != VK_SUCCESS) return fail("the bloom descriptor sets");
+    for (VkDescriptorSet& s : diff_sets_)
+        if (vkAllocateDescriptorSets(dev_, &ai, &s) != VK_SUCCESS) return fail("the bloom descriptor sets");
     ai.pSetLayouts = &ao_set_layout_;
-    vkAllocateDescriptorSets(dev_, &ai, &ao_set_);
+    if (vkAllocateDescriptorSets(dev_, &ai, &ao_set_) != VK_SUCCESS) return fail("the AO descriptor set");
 
     VkDescriptorImageInfo tex{nearest_, texture_ram_.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL};
     VkWriteDescriptorSet w{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
@@ -396,22 +422,24 @@ bool R3DRenderer::init(VkPresenter& vk, float supersample, int msaa, int aniso, 
     pli.pSetLayouts = &r3d_set_layout_;
     pli.pushConstantRangeCount = 1;
     pli.pPushConstantRanges = &pr;
-    vkCreatePipelineLayout(dev_, &pli, nullptr, &r3d_layout_);
+    if (vkCreatePipelineLayout(dev_, &pli, nullptr, &r3d_layout_) != VK_SUCCESS) return fail("the 3D pipeline layout");
     VkPushConstantRange cpr{VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ComposePush)};
     pli.pSetLayouts = &compose_set_layout_;
     pli.pPushConstantRanges = &cpr;
-    vkCreatePipelineLayout(dev_, &pli, nullptr, &compose_layout_);
+    if (vkCreatePipelineLayout(dev_, &pli, nullptr, &compose_layout_) != VK_SUCCESS)
+        return fail("the composition pipeline layout");
     VkPushConstantRange bpr{VK_SHADER_STAGE_FRAGMENT_BIT, 0, 16};
     pli.pSetLayouts = &bloom_set_layout_;
     pli.pPushConstantRanges = &bpr;
-    vkCreatePipelineLayout(dev_, &pli, nullptr, &bloom_layout_);
+    if (vkCreatePipelineLayout(dev_, &pli, nullptr, &bloom_layout_) != VK_SUCCESS)
+        return fail("the bloom pipeline layout");
     VkPushConstantRange apr{VK_SHADER_STAGE_FRAGMENT_BIT, 0, 64};
     // Traced, the ambient occlusion also sees the 3D pass's set (the world's rays)
     VkDescriptorSetLayout ao_sets[2] = {ao_set_layout_, r3d_set_layout_};
     pli.setLayoutCount = rt_.ready() ? 2 : 1;
     pli.pSetLayouts = ao_sets;
     pli.pPushConstantRanges = &apr;
-    vkCreatePipelineLayout(dev_, &pli, nullptr, &ao_layout_);
+    if (vkCreatePipelineLayout(dev_, &pli, nullptr, &ao_layout_) != VK_SUCCESS) return fail("the AO pipeline layout");
 
     return create_pipelines();
 }

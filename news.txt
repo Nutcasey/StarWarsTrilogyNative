@@ -15,6 +15,7 @@
 
 [3] 2026-11-07
 - The droids in the Hoth base are no longer drawn black
+- Endor's planet in the last stage no longer shows grey squares
 - install.bat finds the C++ tools right after installing them, before Windows restarts
 - install.bat updates Visual Studio when its CMake is too old to build the game
 

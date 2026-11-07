@@ -5,6 +5,16 @@
 #include "../ui/frontend.h"
 
 const float BLOOM_STRENGTH[4] = {0.0f, 0.6f, 1.0f, 1.6f};
+// Ultrawide monitors are 2.37 (2560x1080) to 2.39 (3440x1440), wider than
+// 21/9 = 2.33, so 21:9 allows up to 2.4. 32:9 monitors are 3.56; three
+// monitors side by side 5.33, more with bezel correction, so 48:9 allows 6.
+// The 3D view never gets wider than the window, so a level wider than the
+// monitor only leaves room
+const float MAX_ASPECT[5] = {4.0f / 3.0f, 16.0f / 9.0f, 2.4f, 3.6f, 6.0f};
+
+int aspect_level(float max_aspect) {
+    return max_aspect < 1.5f ? 0 : max_aspect < 2.0f ? 1 : max_aspect < 3.0f ? 2 : max_aspect < 4.5f ? 3 : 4;
+}
 
 void options_from_settings(Options& o, const FrontendSettings& ini) {
     o.volume = float(ini.volume);
@@ -13,6 +23,8 @@ void options_from_settings(Options& o, const FrontendSettings& ini) {
     o.cubic_samples = ini.cubic_samples;
     o.rear_boost = ini.rear_boost;
     o.dlaa = ini.aa == 1;
+    int aspect = std::clamp(ini.aspect, 0, 4);
+    if (aspect != aspect_level(o.max_aspect)) o.max_aspect = MAX_ASPECT[aspect];   // --aspect 2.6 stays as 21:9
     if (ini.aa == 2) o.msaa = 1;
     o.haze = ini.haze ? 1.0f : 0.0f;
     o.bloom = BLOOM_STRENGTH[ini.bloom];
@@ -41,6 +53,7 @@ void settings_from_options(FrontendSettings& s, const Options& o) {
     s.cubic_samples = o.cubic_samples;
     s.rear_boost = std::clamp(o.rear_boost / 3 * 3, 0, 12);
     s.aa = o.dlaa ? 1 : o.msaa <= 1 ? 2 : 0;
+    s.aspect = aspect_level(o.max_aspect);   // --aspect 2.6 shows as 21:9 and is kept until changed
     s.haze = o.haze > 0;
     s.bloom = o.bloom <= 0 ? 0 : o.bloom < 0.8f ? 1 : o.bloom < 1.3f ? 2 : 3;
     s.ao = o.ao > 0;

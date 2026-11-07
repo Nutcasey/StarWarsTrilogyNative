@@ -264,8 +264,12 @@ int main(int argc, char** argv) {
     // Window: the game runs on its own thread at real speed; this thread draws
     // the latest image at the monitor's refresh rate (vsync)
     VkPresenter presenter;
-    if (!presenter.init("Star Wars Trilogy Native", int(SCREEN_H * 2 * std::max(g_opt.max_aspect, 4.0f / 3.0f)), SCREEN_H * 2,
-                        g_opt.dlaa)) {
+    // The window as wide as the 3D view, but within the screen (32:9 and
+    // 48:9 are for fullscreen on very wide monitors)
+    int window_w = int(SCREEN_H * 2 * std::max(g_opt.max_aspect, 4.0f / 3.0f));
+    if (RECT work; SystemParametersInfoA(SPI_GETWORKAREA, 0, &work, 0))
+        window_w = std::max(SCREEN_W * 2, std::min(window_w, int(work.right - work.left) - 64));
+    if (!presenter.init("Star Wars Trilogy Native", window_w, SCREEN_H * 2, g_opt.dlaa)) {
         fprintf(stderr, "Could not start Vulkan; try --headless\n");
         return 1;
     }
@@ -869,6 +873,8 @@ int main(int argc, char** argv) {
                 case Frontend::Action::Quit: presenter.close(); break;
                 case Frontend::Action::ToggleFullscreen: presenter.toggle_fullscreen(); break;
                 case Frontend::Action::SettingsChanged:
+                    if (aspect_level(g_opt.max_aspect) != s.aspect)   // an --aspect between the levels stays until changed
+                        renderer.set_max_aspect(g_opt.max_aspect = MAX_ASPECT[s.aspect]);
                     g_sound.set_volume(float(s.volume));
                     g_sound.set_music_gain(float(s.music));
                     toast.set_volume(float(s.volume));

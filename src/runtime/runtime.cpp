@@ -919,7 +919,8 @@ namespace {
 // from which it also builds the node's projection. For full-width viewports the
 // horizontal half angle is widened here so the game keeps what the wider view
 // shows (and the node too); the scene builder divides the widening back out
-// of the projection. SWT_NO_WIDE_CULL turns it off
+// of the projection. Up to 6:1 (WIDESCREEN 48:9, three monitors) = 4.5 times
+// 4:3. SWT_NO_WIDE_CULL turns it off
 static void widen_fov() {
     static const bool off = getenv("SWT_NO_WIDE_CULL") != nullptr;
     // In the lightsaber duels (top state 10..13) only the world's viewports
@@ -928,7 +929,7 @@ static void widen_fov() {
     uint32_t top_state = rd32(0x2210E8);
     static const bool duel_wide = getenv("SWT_DUEL_WIDE_CULL") != nullptr;
     bool duel = rd8(0x1BC85B) == 9 && top_state >= 10 && top_state <= 13 && !duel_wide;
-    float want = off ? 1.0f : std::clamp(g_wide_view.load(), 1.0f, 3.0f);
+    float want = off ? 1.0f : std::clamp(g_wide_view.load(), 1.0f, 4.5f);
     struct Slot { float base = 0, wrote = 0, factor = 1; };
     static Slot slots[32];
     auto rdf = [](uint32_t a) { uint32_t u = rd32(a); float f; memcpy(&f, &u, 4); return f; };

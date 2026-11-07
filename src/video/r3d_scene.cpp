@@ -733,11 +733,7 @@ void R3DSceneBuilder::model(uint32_t addr, const Mat& m, const Attribs& a) {
                 if (h[3] & 0x40) flags |= R3D_SMOOTH_V;
                 if (h[6] & 0x10000) flags |= R3D_LUMINOUS;
                 if (fixed_shading) flags |= R3D_FIXED_SHADE;
-                // SWT_NO_SPECULAR (debugging aid): 1 drops the specular of every
-                // polygon, "flat" only of those lit by their face normal
-                static const char* no_spec = getenv("SWT_NO_SPECULAR");
-                bool spec_off = no_spec && (strcmp(no_spec, "flat") != 0 || !smooth);
-                if (specular && !spec_off) flags |= R3D_SPECULAR;
+                if (specular) flags |= R3D_SPECULAR;
                 if (tex_alpha) flags |= R3D_TEX_ALPHA;
                 flags |= ((h[6] >> 5) & 3) << R3D_SHININESS_SHIFT;
                 if (((h[6] >> 24) & 0x7F) == 2) flags |= R3D_INVERT_RGB;

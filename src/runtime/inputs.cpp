@@ -9,6 +9,7 @@
 Inputs g_inputs;
 std::atomic<bool> g_select_aim{false}, g_fixed_aim{false};
 std::atomic<bool> g_swt_duel{false};
+std::atomic<int> g_duel_invert{0};
 std::atomic<int> g_swt_top_state{-1};
 std::atomic<float> g_sight_scale{0.8f};
 std::atomic<float> g_ffb_shake{0.0f};
@@ -40,6 +41,13 @@ void set_player_aim(int player, float x, float y) {
         // and down, as a flight lever): put back, so the sight goes where the
         // mouse, the stick or the light gun goes (left and right were right)
         if (g_swt_duel) y = 1.0f - y;
+        // INVERT IN DUELS: some players find the duels' aim the wrong way
+        // round all the same (the regular levels are left as they are)
+        if (g_swt_duel) {
+            int inv = g_duel_invert;
+            if (inv & 1) x = 1.0f - x;
+            if (inv & 2) y = 1.0f - y;
+        }
         float lx = 128 + (x - 0.5f) * 255 * range, ly = 128 + (y - 0.5f) * 255 * range;
         if (player == 0) g_lever_exact[0] = lx, g_lever_exact[1] = ly;
         g_inputs.p[player].gun_x = std::clamp(int(std::floor(lx + 0.5f)), 0, 255);

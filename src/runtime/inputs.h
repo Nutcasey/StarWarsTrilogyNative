@@ -72,6 +72,7 @@ void set_player_aim(int player, float x, float y);
 extern std::atomic<float> g_ffb_shake;
 extern std::atomic<float> g_sight_scale;   // Star Wars Trilogy: the game's sight drawn at this size (SIGHT SIZE)
 extern std::atomic<bool> g_swt_duel;   // Star Wars Trilogy: a lightsaber duel (top state 10..13): the lever turned round
+extern std::atomic<int> g_duel_invert;   // OPTIONS > CONTROLS > INVERT IN DUELS: 0 off, 1 x, 2 y, 3 both (the duels only)
 extern std::atomic<int> g_swt_top_state;   // Star Wars Trilogy: the top state (0x2210E8) while playing, -1 otherwise
 struct PlayerAim { float x, y; bool inside; };
 PlayerAim player_aim(int player);

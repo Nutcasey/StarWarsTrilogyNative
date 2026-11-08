@@ -120,6 +120,9 @@ can switch the mouse to move the flight lever instead, as on the cabinet. Light 
 sees as a mouse (Sinden, Gun4IR and the like) work in the default mode; for a Sinden, keep its
 software running for the white border.
 
+If the lightsaber duels feel the wrong way round to you, **Options > Controls > Invert in duels**
+turns the aim round (horizontal, vertical or both) in the duels only; the other stages stay as they are.
+
 ## More
 
 - [Other recompiled arcade games](https://github.com/snicolast/LostWorldNative): The Lost World, also

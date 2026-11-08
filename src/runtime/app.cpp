@@ -193,11 +193,14 @@ int main(int argc, char** argv) {
         g_pad_settings = {ini.pad_speed, ini.gyro, ini.gyro_speed, ini.vibration, ini.aim_assist, ini.pad_lever, ini.pad_invert};
     }
     int exit_code = 0;
+    const bool menu_allowed = g_opt.menu;   // no test run (--no-menu itself is read just below)
     if (!parse_options(g_opt, argc, argv, nullptr, exit_code)) return exit_code;
     // What the options set outside the struct: emulation globals and the gun
     g_data_dir = g_opt.data_dir;
     g_frame_limit = g_opt.frame_limit;
     for (const std::string& script : g_opt.auto_scripts) g_auto.parse(script);
+    // --no-menu: the intro video still plays first, then straight to the game
+    bool intro = menu_allowed && !g_opt.menu && !g_opt.headless && g_auto.events.empty() && g_opt.replay.empty();
     g_fixed_aim = g_opt.fixed_aim;
     if (g_opt.fixed_aim) {   // fixed raw gun ADC values (calibration tests)
         g_inputs.p[0].gun_x = g_opt.aim_x;
@@ -312,7 +315,7 @@ int main(int argc, char** argv) {
         // Records and achievements: real games only, never the scripted or cheated test runs
         if (g_opt.menu && g_auto.events.empty()) stats_init();
         g_audio.start();
-        g_hold = g_opt.menu;   // the main menu comes first
+        g_hold = g_opt.menu || intro;   // the main menu (or the intro video) comes first
         g_skip_attract = g_opt.menu && g_auto.events.empty();   // the menu instead of the attract (runtime.cpp)
         g_boot_skip = g_fast_idle = !g_opt.show_boot;
         g_sound.set_dsp_enabled(!g_boot_skip);
@@ -476,6 +479,27 @@ int main(int argc, char** argv) {
     if (g_opt.menu) {
         if (!frontend.init("third_party/fonts")) printf("[menu] fonts missing: using the Windows ones\n");
         if (!ui.init(presenter)) g_opt.menu = false;
+    }
+    if (intro) {   // --no-menu: only the intro video, the game waits behind it
+        frontend.init("third_party/fonts");
+        if (ui.init(presenter)) {
+            frontend.settings = ini;
+            frontend.settings.splash = true;   // always, whatever settings.ini says
+            frontend.open_splash();
+        }
+        if (!frontend.splash()) {   // no video nor picture, or no overlay
+            frontend.open(Frontend::Screen::None);
+            intro = false;
+            g_hold = false;
+        } else {
+            presenter.input_hook = [&](UINT msg, WPARAM wp, LPARAM) -> bool {
+                if (!frontend.splash()) return false;
+                if (msg == WM_KEYDOWN && (wp == VK_RETURN || wp == VK_SPACE || wp == VK_ESCAPE || wp == VK_BACK))
+                    return frontend.key(int(wp));   // hurries it on (Esc quits only once in the game)
+                if (msg == WM_LBUTTONDOWN || msg == WM_RBUTTONDOWN) return frontend.click(0, 0), true;
+                return false;
+            };
+        }
     }
     if (g_opt.menu) {
         FrontendSettings& s = frontend.settings;
@@ -993,6 +1017,21 @@ int main(int argc, char** argv) {
                     static const char* menu_shot = getenv("LW_MENU_SHOT");   // debugging aid: the menu picture
                     if (menu_shot) save_bmp(menu_shot, ui_pixels.data(), rc.right, rc.bottom);
                 }
+            }
+        }
+        if (intro) {   // --no-menu: the intro video, then the game
+            if (frontend.splash()) {
+                RECT rc;
+                GetClientRect(presenter.hwnd(), &rc);
+                if (frontend.draw(rc.right, rc.bottom, ui_pixels) && frontend.splash())
+                    ui.set_image(ui_pixels.data(), rc.right, rc.bottom);
+            }
+            if (!frontend.splash()) {
+                frontend.open(Frontend::Screen::None);
+                ui.hide();
+                intro = false;
+                g_hold = false;
+                g_block_buttons = true;
             }
         }
         poll_keyboard_mouse(presenter.hwnd());

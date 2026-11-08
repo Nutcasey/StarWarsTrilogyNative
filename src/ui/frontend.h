@@ -57,6 +57,7 @@ struct FrontendSettings {
     int aim_assist = 1;     // gamepad aim assist: 0 off, 1 low, 2 medium, 3 high
     bool pad_lever = false; // the gamepad's sticks are the flight lever (back to the centre when let go)
     int pad_invert = 0;     // the sticks' axes turned round: 0 off, 1 x, 2 y, 3 both
+    int duel_invert = 0;    // the aim turned round in the lightsaber duels only (mouse, light gun, sticks): 0 off, 1 x, 2 y, 3 both
     bool splash = true;     // the logo video at launch (splash_screens = 0: straight to the menu)
     bool menu_music = true; // the game's Main Title in the menus
     int sight_size = 80;    // the game's sight drawn at this size, % (Star Wars Trilogy)
@@ -133,7 +134,7 @@ private:
         PLAY, OPTIONS, QUIT, ARCADE, BACK, RESUME, SETTINGS, QUIT_TO_MENU, TABS,
         RECORDS, DEBUG, DEBUG_STAGE, DEBUG_PHASE, MORE_GAMES, LOST_WORLD,
         OPT_QUALITY, OPT_DISPLAY, OPT_VOLUME, OPT_MUSIC, OPT_SPEAKERS, OPT_REAR, OPT_SAMPLES, OPT_AA, OPT_HAZE, OPT_BLOOM, OPT_AO, OPT_SKY, OPT_SUN, OPT_SHADOWS, OPT_SHAFTS, OPT_SOFT, OPT_HDR, OPT_RELIEF, OPT_SHARPEN, OPT_TEXT, OPT_CROSS, OPT_MICE,
-        OPT_SAT, OPT_GAMMA, OPT_MOTION, OPT_PAD_SPEED, OPT_GYRO, OPT_GYRO_SPEED, OPT_VIBRATION, OPT_ASSIST, OPT_RT, OPT_MENU_MUSIC, EXTRA, DOGFIGHT, OPT_POINTER, OPT_SIGHT, OPT_PAD_AIM, OPT_PAD_INVERT, OPT_UPDATES,
+        OPT_SAT, OPT_GAMMA, OPT_MOTION, OPT_PAD_SPEED, OPT_GYRO, OPT_GYRO_SPEED, OPT_VIBRATION, OPT_ASSIST, OPT_RT, OPT_MENU_MUSIC, EXTRA, DOGFIGHT, OPT_POINTER, OPT_SIGHT, OPT_PAD_AIM, OPT_PAD_INVERT, OPT_DUEL_INVERT, OPT_UPDATES,
         OPT_ASPECT,
     };
     struct Item {

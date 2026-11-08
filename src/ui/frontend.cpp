@@ -223,6 +223,7 @@ void FrontendSettings::load(const char* path) {
         else if (k == "pointer_aim") pointer_sight = v != "lever";
         else if (k == "pad_aim") pad_lever = v == "lever";
         else if (k == "pad_invert") pad_invert = v == "x" ? 1 : v == "y" ? 2 : v == "both" ? 3 : 0;
+        else if (k == "duel_invert") duel_invert = v == "x" ? 1 : v == "y" ? 2 : v == "both" ? 3 : 0;
         else if (k == "sight_size") sight_size = std::clamp(atoi(value) / 10 * 10, 50, 100);
         else if (k == "check_updates") check_updates = on;
         else if (k == "news_seen") news_seen = std::max(0, atoi(value));
@@ -246,6 +247,7 @@ void FrontendSettings::save(const char* path) const {
             gamma / 100.0, smooth ? "smooth" : "original", SPEAKERS[speakers], rear_boost, cubic_samples ? "cubic" : "linear",
             pad_speed, gyro, gyro_speed, BLOOM[vibration], BLOOM[aim_assist], RT_MODES[ray_tracing],
             splash, menu_music, pointer_sight ? "sight" : "lever", sight_size, pad_lever ? "lever" : "sight", INVERT[pad_invert]);
+    fprintf(f, "duel_invert = %s\n", INVERT[duel_invert]);
     fprintf(f, "aspect = %s\n", ASPECT_WORDS[aspect]);
     fprintf(f, "check_updates = %d\nnews_seen = %d\n", check_updates, news_seen);
     if (!lost_world_path.empty()) fprintf(f, "lost_world_path = %s\n", lost_world_path.c_str());
@@ -366,7 +368,7 @@ const Frontend::OptionTab Frontend::OPTION_TABS[] = {
     {OPT_SUN, LIGHTING_TAB}, {OPT_SHADOWS, LIGHTING_TAB}, {OPT_RT, LIGHTING_TAB}, {OPT_HDR, LIGHTING_TAB},
     {OPT_AO, LIGHTING_TAB}, {OPT_BLOOM, LIGHTING_TAB}, {OPT_HAZE, LIGHTING_TAB},
     {OPT_VOLUME, AUDIO_TAB}, {OPT_MUSIC, AUDIO_TAB}, {OPT_SPEAKERS, AUDIO_TAB}, {OPT_REAR, AUDIO_TAB}, {OPT_SAMPLES, AUDIO_TAB}, {OPT_MENU_MUSIC, AUDIO_TAB},
-    {OPT_SIGHT, CONTROLS_TAB}, {OPT_POINTER, CONTROLS_TAB}, {OPT_PAD_AIM, CONTROLS_TAB}, {OPT_PAD_SPEED, CONTROLS_TAB}, {OPT_PAD_INVERT, CONTROLS_TAB}, {OPT_GYRO, CONTROLS_TAB}, {OPT_GYRO_SPEED, CONTROLS_TAB},
+    {OPT_SIGHT, CONTROLS_TAB}, {OPT_POINTER, CONTROLS_TAB}, {OPT_PAD_AIM, CONTROLS_TAB}, {OPT_PAD_SPEED, CONTROLS_TAB}, {OPT_PAD_INVERT, CONTROLS_TAB}, {OPT_DUEL_INVERT, CONTROLS_TAB}, {OPT_GYRO, CONTROLS_TAB}, {OPT_GYRO_SPEED, CONTROLS_TAB},
     {OPT_VIBRATION, CONTROLS_TAB}, {OPT_ASSIST, CONTROLS_TAB},
 };
 
@@ -554,6 +556,8 @@ std::vector<Frontend::Item> Frontend::items() const {
                                     : L"How fast the gamepad's sticks move the sight"},
                 {OPT_PAD_INVERT, L"INVERT STICK", INVERT_TEXT[settings.pad_invert],
                  L"Turn the sticks' horizontal and / or vertical axis round"},
+                {OPT_DUEL_INVERT, L"INVERT IN DUELS", INVERT_TEXT[settings.duel_invert],
+                 L"Turn the aim round in the lightsaber duels only (mouse, light gun and sticks), if they feel the wrong way round"},
                 {OPT_GYRO, L"GYRO AIM", on_off(settings.gyro),
                  gyro_pad ? L"Point the gamepad to aim, together with the sticks"
                           : L"Point the gamepad to aim (DualSense, DualShock 4, Switch Pro).  None connected"},
@@ -698,6 +702,7 @@ void Frontend::activate(const Item& it, int dir) {
     case OPT_POINTER: settings.pointer_sight = !settings.pointer_sight; push(Action::SettingsChanged); break;
     case OPT_PAD_AIM: settings.pad_lever = !settings.pad_lever; push(Action::SettingsChanged); break;
     case OPT_PAD_INVERT: settings.pad_invert = (settings.pad_invert + dir + 4) % 4; push(Action::SettingsChanged); break;
+    case OPT_DUEL_INVERT: settings.duel_invert = (settings.duel_invert + dir + 4) % 4; push(Action::SettingsChanged); break;
     case OPT_MICE: settings.second_mouse = !settings.second_mouse; push(Action::SettingsChanged); break;
     case OPT_PAD_SPEED:
         settings.pad_speed = dir > 0 && settings.pad_speed == 10 && wrap_ ? 1 : std::clamp(settings.pad_speed + dir, 1, 10);

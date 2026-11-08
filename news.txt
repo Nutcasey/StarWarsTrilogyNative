@@ -13,6 +13,9 @@
 #   # ...          a comment, never shown
 # Newest entry at the top. Keep each one short: about ten lines fit.
 
+[7] 2026-11-08
+- OPTIONS > CONTROLS > INVERT IN DUELS: turn the aim round in the lightsaber duels only, if they feel the wrong way round (the other stages stay as they are)
+
 [6] 2026-11-08
 - OPTIONS > DISPLAY > WIDESCREEN: 4:3, 16:9, 21:9, 32:9, or 48:9 for three monitors side by side
 - install.bat adds the Windows SDK when it is missing; build.bat says when there is none
